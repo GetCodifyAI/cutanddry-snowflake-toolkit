@@ -44,6 +44,10 @@ the versions from this skill's `scripts/` folder into that project folder:
 - `describe_table.py` — shows a table/view's full column definitions (name,
   type, nullable, default, comment) plus metadata (row count, size, created,
   last_altered, comment)
+- `profile_table.py` — profiles every column of a table/view in one
+  aggregate query: null count and %, distinct count (approximate by
+  default, `--exact` for exact), min and max. `--sample N` profiles a
+  random N-row sample for very large tables
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -92,6 +96,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Sample rows from a known table → `query_table.py`
    - Understand a table/view's shape (columns, types, nullability, row
      count, size, timestamps) → `describe_table.py`
+   - Understand what's actually in a table's data (how many nulls, how
+     many distinct values, value ranges per column) → `profile_table.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -114,6 +120,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      for a different row count than the default 10, e.g.
      `python query_table.py PUBLIC.ORDERS --limit 25`)
    - Column/type/metadata detail: `python describe_table.py SCHEMA.TABLE_NAME`
+   - Data profile per column: `python profile_table.py SCHEMA.TABLE_NAME`
+     (add `--sample 100000` for tables with hundreds of millions of rows;
+     add `--exact` only if approximate distinct counts aren't good enough -
+     it's much slower on wide tables)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
