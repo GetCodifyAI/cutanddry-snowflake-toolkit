@@ -85,6 +85,13 @@ the versions from this skill's `scripts/` folder into that project folder:
   table names). Tables use the stored row count (exact, instant); views
   are counted with COUNT(*), which can be slow - `--skip-views` avoids
   that. `--diff-only` shows only mismatches
+- `show_grants.py` — shows who has access to a table/view: one row per
+  role with its privileges (OWNERSHIP first), whether it can re-grant,
+  who granted it and since when. `--users` follows role membership
+  (including roles granted to other roles) to list the actual users and
+  the role path that gives them access; `--privilege SELECT` filters to
+  one privilege. Grants on the object only - querying it also needs
+  USAGE on the database and schema
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -147,6 +154,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - "Does this copy/migration have the same data?", comparing row counts
      between two schemas or databases → `compare_counts.py` (pair with
      `diff_schema.py` for structural differences within one database)
+   - "Who can see/edit this table?", "does role X have access?", "which
+     users can read this?" → `show_grants.py` (add `--users` for people,
+     `--privilege SELECT` for read access only)
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -194,6 +204,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Row counts across two schemas:
      `python compare_counts.py SCHEMA_A OTHER_DB.SCHEMA_B` (add
      `--diff-only` to hide matches, `--skip-views` if views are big)
+   - Access: `python show_grants.py SCHEMA.TABLE_NAME` or
+     `python show_grants.py SCHEMA.TABLE_NAME --privilege SELECT --users`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
