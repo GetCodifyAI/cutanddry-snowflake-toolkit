@@ -50,6 +50,10 @@ the versions from this skill's `scripts/` folder into that project folder:
   name partially matches a given string, across all schemas
 - `search_columns.py` — searches the whole database for columns whose name
   partially matches a given string, showing every table/view that has one
+- `list_dynamic_tables.py` — lists dynamic tables specifically (via
+  `SHOW DYNAMIC TABLES`, distinct from `list_tables.py`'s plain
+  tables/views), showing target lag, warehouse, refresh mode, scheduling
+  state, row count, and size, optionally filtered to one schema
 - `.env.template` — template for credentials; the user copies this to `.env`
   and fills in real values (account identifier, username, password,
   warehouse, role, database). Never fill in or guess credentials yourself —
@@ -79,6 +83,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
+   - Looking specifically for dynamic tables (refresh schedule, target lag,
+     warehouse, scheduling state) rather than plain tables/views →
+     `list_dynamic_tables.py`
    - A specific number of rows defaults to 10 if unstated.
 
 2. **Give the exact command**, assuming they're in the folder with these
@@ -91,6 +98,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python query_table.py PUBLIC.ORDERS --limit 25`)
    - Column/type/metadata detail: `python describe_table.py SCHEMA.TABLE_NAME`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
+   - Dynamic tables only: `python list_dynamic_tables.py` or
+     `python list_dynamic_tables.py --schema SOME_SCHEMA`
 
    All scripts accept schema/table names case-insensitively (they resolve
    the real stored case internally) — no manual quoting needed even for

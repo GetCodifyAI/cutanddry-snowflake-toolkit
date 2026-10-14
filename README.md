@@ -62,6 +62,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `query_table.py` | Samples rows from a table/view | `python query_table.py PUBLIC.ORDERS --limit 25` |
 | `describe_table.py` | Shows full column definitions (name, type, nullable, default, comment) plus table metadata (row count, size, timestamps) | `python describe_table.py PUBLIC.ORDERS` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
+| `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 
 All scripts accept schema/table names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
@@ -77,8 +78,8 @@ manual quoting. Views are treated identically to tables throughout.
   `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` only. Row cap for the sample,
   defaults to 10. Example: `python query_table.py PUBLIC.ORDERS --limit 25`.
-- `--schema <name>` — `list_tables.py` only. Scopes the listing to one
-  schema (case-insensitive).
+- `--schema <name>` — `list_tables.py` and `list_dynamic_tables.py` only.
+  Scopes the listing to one schema (case-insensitive).
 
 Terminal output is always printed as an aligned, column-width-aware table
 regardless of whether `--output` is also used.
