@@ -64,6 +64,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `profile_table.py` | Profiles every column: null count/%, distinct count, min/max | `python profile_table.py PUBLIC.ORDERS` or `python profile_table.py PUBLIC.ORDERS --sample 100000` |
 | `top_values.py` | Most frequent values in one column, with count, % and cumulative % (NULL counted as a value) | `python top_values.py PUBLIC.ORDERS STATUS` or `python top_values.py PUBLIC.ORDERS STATUS --limit 50` |
 | `query_history.py` | Recent queries (last 7 days max): start time, user, warehouse, status, seconds, rows, query text. Defaults to your own queries, past 24 hours | `python query_history.py --failed` or `python query_history.py --slowest --hours 72` |
+| `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, and columns added/removed/changed on tables present in both | `python diff_schema.py DTAM_V2 DTAM_V3` |
@@ -73,20 +74,31 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 All scripts accept schema/table (and column) names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
 mixed-case schemas (e.g. Airbyte's `airbyte_internal`) just work without
-manual quoting. Views are treated identically to tables throughout.
+manual quoting. Views are treated identically to tables throughout. The
+one exception is `run_query.py`, which runs your SQL exactly as written:
+there, lowercase or mixed-case identifiers need double quotes, as in any
+Snowflake query.
+
+`run_query.py` only accepts a single SELECT/WITH/SHOW/DESCRIBE/EXPLAIN
+statement and runs it inside a transaction that is always rolled back.
+That stops accidental writes, but a SELECT can still call a system
+function with side effects, so a role granted only `SELECT`/`USAGE` is
+what really keeps it read-only.
 
 ### Flags
 
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `query_history.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `query_history.py`, `run_query.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
   to 10), `recent_tables.py` (max rows to show, defaults to 20),
   `top_values.py` (how many top values to show, defaults to 20), and
-  `query_history.py` (max queries to show, defaults to 20). Example:
+  `query_history.py` (max queries to show, defaults to 20), and
+  `run_query.py` (max rows to print, defaults to 50 - `--output` still
+  gets every row). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
 - `--sample <N>` — `profile_table.py` and `top_values.py`. Works on a
   random sample of N rows instead of the whole table; useful on very large
@@ -100,6 +112,8 @@ manual quoting. Views are treated identically to tables throughout.
   `--all-users` to see other people's queries. `--all-users` on its own is
   slow (roughly 30 seconds per day of history); combine it with
   `--warehouse` or a small `--hours` to keep it fast.
+- `--file` / `-f <path>` — `run_query.py`. Read the query from a `.sql`
+  file instead of the command line.
 - `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, and
   `recent_tables.py`. Scopes the listing to one schema (case-insensitive).
 

@@ -60,6 +60,15 @@ the versions from this skill's `scripts/` folder into that project folder:
   `--hours` (max 167); `--user NAME` or `--all-users` for other people's
   queries. `--all-users` without `--warehouse` is slow (~30 seconds per day
   of history) - prefer pairing it with `--warehouse` or a small `--hours`
+- `run_query.py` — runs one custom read-only query, inline or from a
+  `.sql` file (`--file`), and prints the result (`--limit`, default 50
+  rows printed; `--output` writes every row to CSV). Only a single
+  SELECT/WITH/SHOW/DESCRIBE/EXPLAIN statement is accepted - anything else
+  is refused before reaching Snowflake - and it runs inside a transaction
+  that is always rolled back. The SQL is passed through as written, so
+  lowercase/mixed-case identifiers need double quotes (e.g.
+  `"airbyte_internal"."JIRA_raw__stream_boards"`); unqualified names
+  resolve against `SNOWFLAKE_DATABASE`
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -114,6 +123,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      are there", "which vendor has the most orders") → `top_values.py`
    - "Why was that slow?", "what failed?", "what ran on this warehouse?",
      "what did I/someone run recently?" → `query_history.py`
+   - Anything the other scripts don't cover - joins, filters, aggregates,
+     custom reports → write the SELECT for them and use `run_query.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -150,6 +161,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python query_history.py --search ORDERS`,
      `python query_history.py --all-users --warehouse SOME_WH`
      (`--output` adds full query text, query IDs and error messages)
+   - Custom query: `python run_query.py "select ... from SCHEMA.TABLE ..."`
+     or, for anything longer than a line, have them save it to a file and
+     run `python run_query.py --file query.sql` (avoids shell-quoting
+     problems with double-quoted identifiers)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
