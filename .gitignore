@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Credentials - never commit real values
+.env
+scripts/.env
+
+# OS
+.DS_Store
