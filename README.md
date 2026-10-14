@@ -121,13 +121,3 @@ the cause.
 **`Incorrect username or password was specified`** — a real auth failure.
 Double-check `scripts/.env` matches what works logging into the Snowflake
 web UI directly.
-
-## Security
-
-- `scripts/.env` holds real credentials and is git-ignored — never commit it
-  or paste its contents anywhere public.
-- Every script here is read-only by construction (`select` / `show tables` /
-  `get_ddl` only). Don't add write/DDL-modifying queries without
-  understanding the risk.
-- Use a Snowflake role scoped to read-only access (`SELECT`/`USAGE`) rather
-  than a role with write privileges, if your Snowflake admin can set one up.
