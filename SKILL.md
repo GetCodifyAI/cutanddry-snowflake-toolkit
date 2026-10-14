@@ -61,6 +61,9 @@ the versions from this skill's `scripts/` folder into that project folder:
 - `list_schemas.py` — lists every schema in the database with table/view
   counts, estimated size, and created/last_altered timestamps - a quick
   overview before drilling into one schema
+- `recent_tables.py` — lists tables/views sorted by `last_altered`, most
+  recent first, optionally scoped to one schema - answers "what changed
+  recently"
 - `.env.template` — template for credentials; the user copies this to `.env`
   and fills in real values (account identifier, username, password,
   warehouse, role, database). Never fill in or guess credentials yourself —
@@ -97,6 +100,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `list_dynamic_tables.py`
    - Comparing two schemas (e.g. a versioned pair like `DTAM_V2` vs
      `DTAM_V3`) to see what tables/columns differ → `diff_schema.py`
+   - "What changed recently" across the database (or one schema) →
+     `recent_tables.py`
    - A specific number of rows defaults to 10 if unstated.
 
 2. **Give the exact command**, assuming they're in the folder with these
@@ -113,6 +118,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B`
+   - Recently changed tables: `python recent_tables.py` (add `--limit`/`-n`
+     for more/fewer than the default 20, or `--schema` to scope to one
+     schema)
 
    All scripts accept schema/table names case-insensitively (they resolve
    the real stored case internally) — no manual quoting needed even for

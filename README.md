@@ -65,6 +65,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, and columns added/removed/changed on tables present in both | `python diff_schema.py DTAM_V2 DTAM_V3` |
 | `list_schemas.py` | Lists every schema in the database with table/view counts, estimated size, created/last_altered | `python list_schemas.py` |
+| `recent_tables.py` | Lists tables/views sorted by last_altered, most recent first - "what changed recently" | `python recent_tables.py --limit 50` or `python recent_tables.py --schema PUBLIC` |
 
 All scripts accept schema/table names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
@@ -76,12 +77,14 @@ manual quoting. Views are treated identically to tables throughout.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`), or a `.sql` text file for
-  `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
-- `--limit` / `-n <N>` — `query_table.py` only. Row cap for the sample,
-  defaults to 10. Example: `python query_table.py PUBLIC.ORDERS --limit 25`.
-- `--schema <name>` — `list_tables.py` and `list_dynamic_tables.py` only.
-  Scopes the listing to one schema (case-insensitive).
+  `query_table.py`, `describe_table.py`, `list_dynamic_tables.py`,
+  `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
+  file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
+- `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
+  to 10) and `recent_tables.py` (max rows to show, defaults to 20). Example:
+  `python query_table.py PUBLIC.ORDERS --limit 25`.
+- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, and
+  `recent_tables.py`. Scopes the listing to one schema (case-insensitive).
 
 Terminal output is always printed as an aligned, column-width-aware table
 regardless of whether `--output` is also used.
