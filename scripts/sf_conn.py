@@ -8,6 +8,8 @@ legacy ssl.PROTOCOL_TLSv1 / TLSv1_1 constants have been removed.
 
 import argparse
 import csv
+import datetime
+import decimal
 import os
 import ssl
 import sys
@@ -101,6 +103,35 @@ def resolve_schema(conn, db, schema):
     return rows[0][0]
 
 
+def resolve_column(conn, db, schema, table, column):
+    """
+    Look up a column of an already-resolved table/view by name, tolerant of
+    case. Returns (real_name, data_type) using the exact stored case.
+    Raises SystemExit with a clear message if there's no match or more
+    than one.
+    """
+    cs = conn.cursor()
+    cs.execute(
+        f'select column_name, data_type from {info_schema(db, "columns")} '
+        'where table_schema = %s and table_name = %s and upper(column_name) = upper(%s)',
+        (schema, table, column),
+    )
+    rows = cs.fetchall()
+    if not rows:
+        raise SystemExit(
+            f"No column matching '{column}' in {schema}.{table}. "
+            "Try describe_table.py to see its columns."
+        )
+    if len(rows) > 1:
+        # Columns differing only by case (e.g. "Name" and NAME): an exact-case match wins.
+        exact = [r for r in rows if r[0] == column]
+        if len(exact) == 1:
+            return exact[0]
+        options = ", ".join(r[0] for r in rows)
+        raise SystemExit(f"Multiple columns matching '{column}': {options}. Type the exact case to pick one.")
+    return rows[0]
+
+
 def quote_ident(name):
     """Quote a single identifier exactly as stored, escaping any embedded double quotes."""
     return '"' + name.replace('"', '""') + '"'
@@ -155,6 +186,39 @@ def fmt_count(n):
 def fmt_bytes(n):
     """Format a byte size for display: comma-grouped with a 'bytes' suffix, or 'n/a' if unknown."""
     return f"{n:,} bytes" if n is not None else "n/a"
+
+
+# Values longer than this are cut short in the terminal (the CSV keeps them whole).
+MAX_DISPLAY_WIDTH = 40
+
+
+def fmt_value(v):
+    """Format a column value for display: commas on numbers, MM/DD/YY on dates."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return str(v)
+    if isinstance(v, (int, float, decimal.Decimal)):
+        return f"{v:,}"
+    if isinstance(v, datetime.datetime):
+        return v.strftime("%m/%d/%y %H:%M:%S")
+    if isinstance(v, datetime.date):
+        return v.strftime("%m/%d/%y")
+    if isinstance(v, bytes):
+        return v.hex()
+    if v == "":
+        return "(empty string)"  # otherwise indistinguishable from NULL
+    return str(v).replace("\n", " ").replace("\r", " ")
+
+
+def truncate(s):
+    """Cut a display string to MAX_DISPLAY_WIDTH characters, ending in '...' if shortened."""
+    return s if len(s) <= MAX_DISPLAY_WIDTH else s[:MAX_DISPLAY_WIDTH - 3] + "..."
+
+
+def fmt_pct(part, whole):
+    """Percentage with one decimal place, or 'n/a' for an empty table."""
+    return f"{100 * part / whole:.1f}%" if whole else "n/a"
 
 
 def print_table(headers, rows):

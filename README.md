@@ -62,13 +62,14 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `query_table.py` | Samples rows from a table/view | `python query_table.py PUBLIC.ORDERS --limit 25` |
 | `describe_table.py` | Shows full column definitions (name, type, nullable, default, comment) plus table metadata (row count, size, timestamps) | `python describe_table.py PUBLIC.ORDERS` |
 | `profile_table.py` | Profiles every column: null count/%, distinct count, min/max | `python profile_table.py PUBLIC.ORDERS` or `python profile_table.py PUBLIC.ORDERS --sample 100000` |
+| `top_values.py` | Most frequent values in one column, with count, % and cumulative % (NULL counted as a value) | `python top_values.py PUBLIC.ORDERS STATUS` or `python top_values.py PUBLIC.ORDERS STATUS --limit 50` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, and columns added/removed/changed on tables present in both | `python diff_schema.py DTAM_V2 DTAM_V3` |
 | `list_schemas.py` | Lists every schema in the database with table/view counts, estimated size, created/last_altered | `python list_schemas.py` |
 | `recent_tables.py` | Lists tables/views sorted by last_altered, most recent first - "what changed recently" | `python recent_tables.py --limit 50` or `python recent_tables.py --schema PUBLIC` |
 
-All scripts accept schema/table names case-insensitively — they resolve the
+All scripts accept schema/table (and column) names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
 mixed-case schemas (e.g. Airbyte's `airbyte_internal`) just work without
 manual quoting. Views are treated identically to tables throughout.
@@ -78,14 +79,16 @@ manual quoting. Views are treated identically to tables throughout.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
-  to 10) and `recent_tables.py` (max rows to show, defaults to 20). Example:
+  to 10), `recent_tables.py` (max rows to show, defaults to 20), and
+  `top_values.py` (how many top values to show, defaults to 20). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
-- `--sample <N>` — `profile_table.py`. Profiles a random sample of N rows
-  instead of the whole table; useful on very large tables.
+- `--sample <N>` — `profile_table.py` and `top_values.py`. Works on a
+  random sample of N rows instead of the whole table; useful on very large
+  tables.
 - `--exact` — `profile_table.py`. Exact distinct counts instead of the
   default approximate ones (typically within ~1%). Much slower on wide
   tables.

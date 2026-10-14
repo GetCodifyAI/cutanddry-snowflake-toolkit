@@ -3,8 +3,8 @@ Read-only: profiles every column of a table or view - null count and %,
 distinct count, min and max - in a single aggregate query. Distinct
 counts are approximate (HyperLogLog, typically within ~1%) by default for
 speed; use --exact for exact counts, which can be much slower on wide
-tables (minutes for a few hundred columns). On very large tables, --sample profiles a random
-subset of rows instead of the whole table.
+tables (minutes for a few hundred columns). On very large tables,
+--sample profiles a random subset of rows instead of the whole table.
 
 Usage:
   python profile_table.py SCHEMA.TABLE_OR_VIEW
@@ -14,48 +14,14 @@ Usage:
 """
 
 import argparse
-import datetime
-import decimal
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_value, fmt_pct, truncate
 
 # Types Snowflake can't take MIN/MAX on (ARRAY/OBJECT fail outright; for
 # VARIANT the result isn't meaningful) - distinct is still counted for these.
 NO_MIN_MAX_TYPES = {"VARIANT", "OBJECT", "ARRAY"}
 # Types where only the null count is profiled.
 NO_STATS_TYPES = {"MAP", "GEOGRAPHY", "GEOMETRY", "VECTOR"}
-
-# Min/max values longer than this are cut short in the terminal (the CSV keeps them whole).
-MAX_DISPLAY_WIDTH = 40
-
-
-def fmt_value(v):
-    """Format a min/max value for display: commas on numbers, MM/DD/YY on dates."""
-    if v is None:
-        return ""
-    if isinstance(v, bool):
-        return str(v)
-    if isinstance(v, (int, float, decimal.Decimal)):
-        return f"{v:,}"
-    if isinstance(v, datetime.datetime):
-        return v.strftime("%m/%d/%y %H:%M:%S")
-    if isinstance(v, datetime.date):
-        return v.strftime("%m/%d/%y")
-    if isinstance(v, bytes):
-        return v.hex()
-    if v == "":
-        return "(empty string)"  # otherwise indistinguishable from NULL
-    return str(v).replace("\n", " ").replace("\r", " ")
-
-
-def truncate(s):
-    return s if len(s) <= MAX_DISPLAY_WIDTH else s[:MAX_DISPLAY_WIDTH - 3] + "..."
-
-
-def fmt_pct(part, whole):
-    """Percentage with one decimal place, or 'n/a' for an empty table."""
-    return f"{100 * part / whole:.1f}%" if whole else "n/a"
-
 
 def main():
     parser = argparse.ArgumentParser(description="Profile every column of a table or view: nulls, distinct values, min/max.")

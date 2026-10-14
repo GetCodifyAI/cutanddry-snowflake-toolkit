@@ -48,6 +48,10 @@ the versions from this skill's `scripts/` folder into that project folder:
   aggregate query: null count and %, distinct count (approximate by
   default, `--exact` for exact), min and max. `--sample N` profiles a
   random N-row sample for very large tables
+- `top_values.py` — shows the most frequent values in one column with
+  count, % of rows and cumulative % (NULL counted as a value); `--limit`
+  (default 20), `--sample N` for very large tables. Column name is
+  case-insensitive
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -98,6 +102,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      count, size, timestamps) → `describe_table.py`
    - Understand what's actually in a table's data (how many nulls, how
      many distinct values, value ranges per column) → `profile_table.py`
+   - What values a specific column holds and how often (e.g. "what statuses
+     are there", "which vendor has the most orders") → `top_values.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -124,6 +130,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      (add `--sample 100000` for tables with hundreds of millions of rows;
      add `--exact` only if approximate distinct counts aren't good enough -
      it's much slower on wide tables)
+   - Most frequent values in a column:
+     `python top_values.py SCHEMA.TABLE_NAME COLUMN` (add `--limit`/`-n` for
+     more/fewer than the default 20; quote column names with spaces, e.g.
+     `python top_values.py MYSCHEMA.MYTABLE "Billing Status"`)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
