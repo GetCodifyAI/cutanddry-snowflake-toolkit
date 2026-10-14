@@ -83,17 +83,26 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
 
 2. **Give the exact command**, assuming they're in the folder with these
    scripts and (if using a venv) have it activated:
-   - Browse: `python list_tables.py` or `python list_tables.py SOME_SCHEMA`
+   - Browse: `python list_tables.py` or `python list_tables.py --schema SOME_SCHEMA`
    - Search by table name: `python search_tables.py monday`
    - Search by column name: `python search_columns.py email`
-   - Sample rows: `python query_table.py SCHEMA.TABLE_NAME` (add a number for
-     a different limit than 10, e.g. `python query_table.py PUBLIC.ORDERS 25`)
+   - Sample rows: `python query_table.py SCHEMA.TABLE_NAME` (add `--limit`/`-n`
+     for a different row count than the default 10, e.g.
+     `python query_table.py PUBLIC.ORDERS --limit 25`)
    - Column/type/metadata detail: `python describe_table.py SCHEMA.TABLE_NAME`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
 
    All scripts accept schema/table names case-insensitively (they resolve
    the real stored case internally) — no manual quoting needed even for
    lowercase schemas like `airbyte_internal`.
+
+   Every script also takes `--output`/`-o <path>` to save the full result to
+   a file (CSV for tabular results; `.sql` text for `get_ddl.py`) — suggest
+   this whenever the user wants to keep or share more than what fits in the
+   terminal, e.g. `python search_columns.py email --output matches.csv` or
+   `python get_ddl.py PUBLIC.ORDERS --output orders.sql`. Output is still
+   printed to the terminal as an aligned table either way, so pasting it
+   back to you works exactly as before.
 
    If you're not sure they're still in the right folder / venv, remind them
    briefly (`cd` into the folder, `source venv/bin/activate`) rather than

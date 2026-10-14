@@ -56,10 +56,10 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | Script | What it does | Example |
 |---|---|---|
 | `test_connection.py` | Sanity-checks your `.env` and credentials | `python test_connection.py` |
-| `list_tables.py` | Lists every table + view in the configured database, grouped by schema, with kind/row count/size/last_altered | `python list_tables.py` or `python list_tables.py PUBLIC` |
+| `list_tables.py` | Lists every table + view in the configured database, grouped by schema, with kind/row count/size/last_altered | `python list_tables.py` or `python list_tables.py --schema PUBLIC` |
 | `search_tables.py` | Finds tables/views by partial name match across every schema | `python search_tables.py monday` |
 | `search_columns.py` | Finds every table/view that has a column matching a partial name | `python search_columns.py email` |
-| `query_table.py` | Samples rows from a table/view | `python query_table.py PUBLIC.ORDERS 25` |
+| `query_table.py` | Samples rows from a table/view | `python query_table.py PUBLIC.ORDERS --limit 25` |
 | `describe_table.py` | Shows full column definitions (name, type, nullable, default, comment) plus table metadata (row count, size, timestamps) | `python describe_table.py PUBLIC.ORDERS` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 
@@ -67,6 +67,21 @@ All scripts accept schema/table names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
 mixed-case schemas (e.g. Airbyte's `airbyte_internal`) just work without
 manual quoting. Views are treated identically to tables throughout.
+
+### Flags
+
+- `--output` / `-o <path>` — every script supports this. Writes the full
+  result to a file in addition to printing it: CSV for tabular results
+  (`list_tables.py`, `search_tables.py`, `search_columns.py`,
+  `query_table.py`, `describe_table.py`), or a `.sql` text file for
+  `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
+- `--limit` / `-n <N>` — `query_table.py` only. Row cap for the sample,
+  defaults to 10. Example: `python query_table.py PUBLIC.ORDERS --limit 25`.
+- `--schema <name>` — `list_tables.py` only. Scopes the listing to one
+  schema (case-insensitive).
+
+Terminal output is always printed as an aligned, column-width-aware table
+regardless of whether `--output` is also used.
 
 ## Using this with Claude
 

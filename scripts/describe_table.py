@@ -6,18 +6,24 @@ cased when it was created.
 
 Usage:
   python describe_table.py SCHEMA.TABLE_OR_VIEW
+  python describe_table.py SCHEMA.TABLE_OR_VIEW --output columns.csv
 """
 
-import sys
-from sf_conn import get_connection, current_database, resolve_object
+import argparse
+
+from sf_conn import get_connection, current_database, resolve_object, print_table, write_csv
 
 
 def main():
-    if len(sys.argv) < 2 or "." not in sys.argv[1]:
-        print("Usage: python describe_table.py SCHEMA.TABLE_OR_VIEW")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Describe a table or view's columns and metadata.")
+    parser.add_argument("table", help="Schema-qualified table/view name, e.g. PUBLIC.ORDERS")
+    parser.add_argument("--output", "-o", help="Also write the column list to this CSV file.")
+    args = parser.parse_args()
 
-    schema, name = sys.argv[1].split(".", 1)
+    if "." not in args.table:
+        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
+
+    schema, name = args.table.split(".", 1)
     db = current_database()
 
     conn = get_connection()
@@ -54,19 +60,25 @@ def main():
         )
         columns = cs.fetchall()
 
-        print(f"{'COLUMN':30} {'TYPE':20} {'NULLABLE':9} {'DEFAULT':15} COMMENT")
-        print("-" * 100)
+        display_rows = []
         for col_name, data_type, nullable, default, comment, char_len, num_prec, num_scale in columns:
             type_display = data_type
             if char_len:
                 type_display = f"{data_type}({char_len})"
             elif num_prec and num_scale is not None:
                 type_display = f"{data_type}({num_prec},{num_scale})"
-            print(
-                f"{col_name:30} {type_display:20} {nullable:9} "
-                f"{(default or ''):15} {comment or ''}"
-            )
+            display_rows.append([col_name, type_display, nullable, default or "", comment or ""])
+
+        print_table(["COLUMN", "TYPE", "NULLABLE", "DEFAULT", "COMMENT"], display_rows)
         print(f"\n({len(columns)} columns)")
+
+        if args.output:
+            n = write_csv(
+                args.output,
+                ["column", "type", "nullable", "default", "comment"],
+                display_rows,
+            )
+            print(f"Wrote {n} rows to {args.output}")
 
     finally:
         conn.close()

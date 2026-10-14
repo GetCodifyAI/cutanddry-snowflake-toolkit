@@ -81,3 +81,31 @@ def resolve_object(conn, schema, name, database=None):
 
 def quoted(db, schema, name):
     return f'"{db}"."{schema}"."{name}"'
+
+
+def print_table(headers, rows):
+    """Pretty-print rows as an aligned, column-width-aware table."""
+    str_rows = [["" if v is None else str(v) for v in row] for row in rows]
+    widths = [len(h) for h in headers]
+    for row in str_rows:
+        for i, val in enumerate(row):
+            widths[i] = max(widths[i], len(val))
+
+    def fmt(vals):
+        return "  ".join(val.ljust(widths[i]) for i, val in enumerate(vals))
+
+    print(fmt(headers))
+    print("-" * (sum(widths) + 2 * (len(widths) - 1)))
+    for row in str_rows:
+        print(fmt(row))
+
+
+def write_csv(path, headers, rows):
+    """Write headers+rows to a CSV file at `path`. Returns the row count."""
+    import csv
+
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        writer.writerows(rows)
+    return len(rows)

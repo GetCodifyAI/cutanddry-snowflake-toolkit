@@ -4,17 +4,23 @@ SNOWFLAKE_DATABASE in .env, using INFORMATION_SCHEMA (so case-sensitive
 schema/table names, e.g. from Airbyte, just work without any quoting).
 
 Usage:
-  python list_tables.py                  # everything in the database
-  python list_tables.py SOME_SCHEMA      # just one schema (case-insensitive)
+  python list_tables.py                        # everything in the database
+  python list_tables.py --schema SOME_SCHEMA    # just one schema (case-insensitive)
+  python list_tables.py --output tables.csv     # also write results to CSV
 """
 
-import sys
-from sf_conn import get_connection, current_database
+import argparse
+
+from sf_conn import get_connection, current_database, print_table, write_csv
 
 
 def main():
+    parser = argparse.ArgumentParser(description="List tables and views in the configured database.")
+    parser.add_argument("--schema", help="Only list objects in this schema (case-insensitive).")
+    parser.add_argument("--output", "-o", help="Also write the full result to this CSV file.")
+    args = parser.parse_args()
+
     db = current_database()
-    schema_filter = sys.argv[1] if len(sys.argv) > 1 else None
 
     conn = get_connection()
     try:
@@ -25,16 +31,16 @@ def main():
             f'from "{db}".information_schema.tables'
         )
         params = ()
-        if schema_filter:
+        if args.schema:
             query += " where table_schema ilike %s"
-            params = (schema_filter,)
+            params = (args.schema,)
         query += " order by table_schema, table_name"
 
         cs.execute(query, params)
         rows = cs.fetchall()
 
         if not rows:
-            scope = f"schema '{schema_filter}'" if schema_filter else f"database {db}"
+            scope = f"schema '{args.schema}'" if args.schema else f"database {db}"
             print(f"No tables or views found in {scope}.")
             return
 
@@ -50,6 +56,11 @@ def main():
                 f"  - {name}  [{kind}]  rows={rows_display}  "
                 f"size={size}  last_altered={last_altered}"
             )
+
+        if args.output:
+            headers = ["schema", "name", "type", "row_count", "bytes", "created", "last_altered"]
+            n = write_csv(args.output, headers, rows)
+            print(f"\nWrote {n} rows to {args.output}")
 
     finally:
         conn.close()

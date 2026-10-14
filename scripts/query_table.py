@@ -4,24 +4,31 @@ Automatically resolves the correct case of the schema/table name, so you
 don't need to worry about quoting lowercase schemas like "airbyte_internal".
 
 Usage:
-  python query_table.py SCHEMA.TABLE_NAME [limit]
+  python query_table.py SCHEMA.TABLE_NAME
+  python query_table.py SCHEMA.TABLE_NAME --limit 25
+  python query_table.py SCHEMA.TABLE_NAME --output rows.csv
 
 Examples:
   python query_table.py PUBLIC.ORDERS
-  python query_table.py PUBLIC.ORDERS 25
+  python query_table.py PUBLIC.ORDERS --limit 25 --output orders_sample.csv
 """
 
-import sys
-from sf_conn import get_connection, current_database, resolve_object, quoted
+import argparse
+
+from sf_conn import get_connection, current_database, resolve_object, quoted, print_table, write_csv
 
 
 def main():
-    if len(sys.argv) < 2 or "." not in sys.argv[1]:
-        print("Usage: python query_table.py <schema.table_name> [limit]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Sample rows from a table or view.")
+    parser.add_argument("table", help="Schema-qualified table/view name, e.g. PUBLIC.ORDERS")
+    parser.add_argument("--limit", "-n", type=int, default=10, help="Max rows to return (default 10).")
+    parser.add_argument("--output", "-o", help="Also write the full result to this CSV file.")
+    args = parser.parse_args()
 
-    schema, name = sys.argv[1].split(".", 1)
-    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 10
+    if "." not in args.table:
+        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
+
+    schema, name = args.table.split(".", 1)
     db = current_database()
 
     conn = get_connection()
@@ -30,15 +37,16 @@ def main():
         real_schema, real_name, kind = resolve_object(conn, schema, name, db)
         full_name = quoted(db, real_schema, real_name)
 
-        cs.execute(f"select * from {full_name} limit {limit}")
+        cs.execute(f"select * from {full_name} limit {args.limit}")
         cols = [d[0] for d in cs.description]
         rows = cs.fetchall()
 
-        print(" | ".join(cols))
-        print("-" * 100)
-        for row in rows:
-            print(" | ".join("" if v is None else str(v) for v in row))
+        print_table(cols, rows)
         print(f"\n({len(rows)} rows)")
+
+        if args.output:
+            n = write_csv(args.output, cols, rows)
+            print(f"Wrote {n} rows to {args.output}")
 
     finally:
         conn.close()

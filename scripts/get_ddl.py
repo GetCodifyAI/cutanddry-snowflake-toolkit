@@ -5,18 +5,24 @@ clustering keys, view definitions, etc. all in one place).
 
 Usage:
   python get_ddl.py SCHEMA.TABLE_OR_VIEW
+  python get_ddl.py SCHEMA.TABLE_OR_VIEW --output table.sql
 """
 
-import sys
+import argparse
+
 from sf_conn import get_connection, current_database, resolve_object, quoted
 
 
 def main():
-    if len(sys.argv) < 2 or "." not in sys.argv[1]:
-        print("Usage: python get_ddl.py SCHEMA.TABLE_OR_VIEW")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Print the CREATE TABLE/VIEW DDL for a table or view.")
+    parser.add_argument("table", help="Schema-qualified table/view name, e.g. PUBLIC.ORDERS")
+    parser.add_argument("--output", "-o", help="Also write the DDL to this file (e.g. table.sql).")
+    args = parser.parse_args()
 
-    schema, name = sys.argv[1].split(".", 1)
+    if "." not in args.table:
+        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
+
+    schema, name = args.table.split(".", 1)
     db = current_database()
 
     conn = get_connection()
@@ -29,6 +35,11 @@ def main():
         cs.execute("select get_ddl(%s, %s)", (sf_kind, full_name))
         ddl = cs.fetchone()[0]
         print(ddl)
+
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(ddl + "\n")
+            print(f"\nWrote DDL to {args.output}")
 
     finally:
         conn.close()
