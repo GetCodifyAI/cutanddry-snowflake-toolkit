@@ -77,6 +77,14 @@ the versions from this skill's `scripts/` folder into that project folder:
   errors; `--schema` scopes it; `--hours` shortens the window (max 167).
   `--runs SCHEMA.TASK` shows one task's individual runs with error
   messages. Run history only goes back 7 days
+- `compare_counts.py` — compares row counts of same-named tables/views in
+  two schemas: each side's count, signed difference and difference %.
+  Either argument can be `DATABASE.SCHEMA` to compare across databases
+  (the usual case here - e.g. `CUT_AND_DRY_PROD_SCHEMA` vs
+  `CUT_AND_DRY_UNIFIED.PRODUCTION`; schemas inside CUT_AND_DRY don't share
+  table names). Tables use the stored row count (exact, instant); views
+  are counted with COUNT(*), which can be slow - `--skip-views` avoids
+  that. `--diff-only` shows only mismatches
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -136,6 +144,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Scheduled jobs: "what tasks do we have", "did the nightly job run",
      "why did that task fail", "what's suspended" → `list_tasks.py`
      (then `--runs SCHEMA.TASK` for one task's errors)
+   - "Does this copy/migration have the same data?", comparing row counts
+     between two schemas or databases → `compare_counts.py` (pair with
+     `diff_schema.py` for structural differences within one database)
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -180,6 +191,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      then `python list_tasks.py --runs SCHEMA.TASK_NAME` for one task's
      runs and errors (`--output` adds condition, owner, last error and the
      task's full SQL definition)
+   - Row counts across two schemas:
+     `python compare_counts.py SCHEMA_A OTHER_DB.SCHEMA_B` (add
+     `--diff-only` to hide matches, `--skip-views` if views are big)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
