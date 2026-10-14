@@ -6,6 +6,7 @@ legacy ssl.PROTOCOL_TLSv1 / TLSv1_1 constants have been removed.
 (See snowflakedb/snowflake-connector-python issue #3048.)
 """
 
+import csv
 import os
 import ssl
 import sys
@@ -63,9 +64,8 @@ def resolve_object(conn, schema, name, database=None):
     db = database or current_database()
     cs = conn.cursor()
     cs.execute(
-        f'select table_schema, table_name, table_type '
-        f'from "{db}".information_schema.tables '
-        f'where table_schema ilike %s and table_name ilike %s',
+        f'select table_schema, table_name, table_type from {info_schema(db, "tables")} '
+        'where table_schema ilike %s and table_name ilike %s',
         (schema, name),
     )
     rows = cs.fetchall()
@@ -77,12 +77,31 @@ def resolve_object(conn, schema, name, database=None):
             f"Multiple matches for {schema}.{name}: {options}. Be more specific."
         )
     real_schema, real_name, table_type = rows[0]
-    kind = "VIEW" if "VIEW" in table_type else "TABLE"
-    return real_schema, real_name, kind
+    return real_schema, real_name, kind_from_type(table_type)
 
 
 def quoted(db, schema, name):
     return f'"{db}"."{schema}"."{name}"'
+
+
+def info_schema(db, view_name):
+    """Return the quoted, schema-qualified name of an INFORMATION_SCHEMA view, e.g. info_schema(db, "tables")."""
+    return f'"{db}".information_schema.{view_name}'
+
+
+def kind_from_type(table_type):
+    """Map an INFORMATION_SCHEMA table_type value to the short 'TABLE'/'VIEW' label used for display."""
+    return "VIEW" if "VIEW" in table_type else "TABLE"
+
+
+def fmt_count(n):
+    """Format a row count for display: comma-grouped, or 'n/a' if unknown."""
+    return f"{n:,}" if n is not None else "n/a"
+
+
+def fmt_bytes(n):
+    """Format a byte size for display: comma-grouped with a 'bytes' suffix, or 'n/a' if unknown."""
+    return f"{n:,} bytes" if n is not None else "n/a"
 
 
 def print_table(headers, rows):
@@ -104,8 +123,6 @@ def print_table(headers, rows):
 
 def write_csv(path, headers, rows):
     """Write headers+rows to a CSV file at `path`. Returns the row count."""
-    import csv
-
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)

@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes
 
 
 def main():
@@ -26,9 +26,8 @@ def main():
     try:
         cs = conn.cursor()
         query = (
-            f'select table_schema, table_name, table_type, row_count, bytes, '
-            f'created, last_altered '
-            f'from "{db}".information_schema.tables'
+            'select table_schema, table_name, table_type, row_count, bytes, '
+            f'created, last_altered from {info_schema(db, "tables")}'
         )
         params = ()
         if args.schema:
@@ -49,9 +48,9 @@ def main():
             if schema != current_schema:
                 print(f"\n[{schema}]")
                 current_schema = schema
-            kind = "VIEW" if "VIEW" in ttype else "TABLE"
-            size = f"{bytes_:,} bytes" if bytes_ is not None else "n/a"
-            rows_display = f"{row_count:,}" if row_count is not None else "n/a"
+            kind = kind_from_type(ttype)
+            size = fmt_bytes(bytes_)
+            rows_display = fmt_count(row_count)
             print(
                 f"  - {name}  [{kind}]  rows={rows_display}  "
                 f"size={size}  last_altered={last_altered}"

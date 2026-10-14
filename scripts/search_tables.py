@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count
 
 
 def main():
@@ -29,10 +29,9 @@ def main():
     try:
         cs = conn.cursor()
         cs.execute(
-            f'select table_schema, table_name, table_type, row_count, last_altered '
-            f'from "{db}".information_schema.tables '
-            f'where table_name ilike %s '
-            f'order by table_schema, table_name',
+            'select table_schema, table_name, table_type, row_count, last_altered '
+            f'from {info_schema(db, "tables")} '
+            'where table_name ilike %s order by table_schema, table_name',
             (f"%{args.pattern}%",),
         )
         rows = cs.fetchall()
@@ -43,8 +42,8 @@ def main():
 
         display_rows = []
         for schema, name, ttype, row_count, last_altered in rows:
-            kind = "VIEW" if "VIEW" in ttype else "TABLE"
-            rows_display = f"{row_count:,}" if row_count is not None else "n/a"
+            kind = kind_from_type(ttype)
+            rows_display = fmt_count(row_count)
             display_rows.append([f"{schema}.{name}", kind, rows_display, last_altered])
 
         print(f"Matches for '{args.pattern}' in {db}:\n")

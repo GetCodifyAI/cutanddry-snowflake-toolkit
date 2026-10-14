@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema
 
 
 def main():
@@ -29,10 +29,9 @@ def main():
     try:
         cs = conn.cursor()
         cs.execute(
-            f'select table_schema, table_name, column_name, data_type, is_nullable '
-            f'from "{db}".information_schema.columns '
-            f'where column_name ilike %s '
-            f'order by table_schema, table_name, ordinal_position',
+            'select table_schema, table_name, column_name, data_type, is_nullable '
+            f'from {info_schema(db, "columns")} '
+            'where column_name ilike %s order by table_schema, table_name, ordinal_position',
             (f"%{args.pattern}%",),
         )
         rows = cs.fetchall()

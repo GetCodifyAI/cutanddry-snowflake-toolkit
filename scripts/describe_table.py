@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, resolve_object, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes
 
 
 def main():
@@ -33,16 +33,16 @@ def main():
 
         # Metadata (row count, size, timestamps) straight from INFORMATION_SCHEMA.
         cs.execute(
-            f'select row_count, bytes, created, last_altered, comment '
-            f'from "{db}".information_schema.tables '
-            f'where table_schema = %s and table_name = %s',
+            'select row_count, bytes, created, last_altered, comment '
+            f'from {info_schema(db, "tables")} '
+            'where table_schema = %s and table_name = %s',
             (real_schema, real_name),
         )
         row_count, bytes_, created, last_altered, table_comment = cs.fetchone()
 
         print(f"{real_schema}.{real_name}  [{kind}]")
-        rows_display = f"{row_count:,}" if row_count is not None else "n/a"
-        size_display = f"{bytes_:,} bytes" if bytes_ is not None else "n/a"
+        rows_display = fmt_count(row_count)
+        size_display = fmt_bytes(bytes_)
         print(f"  rows: {rows_display}   size: {size_display}")
         print(f"  created: {created}   last_altered: {last_altered}")
         if table_comment:
@@ -51,11 +51,10 @@ def main():
 
         # Column definitions.
         cs.execute(
-            f'select column_name, data_type, is_nullable, column_default, comment, '
-            f'character_maximum_length, numeric_precision, numeric_scale '
-            f'from "{db}".information_schema.columns '
-            f'where table_schema = %s and table_name = %s '
-            f'order by ordinal_position',
+            'select column_name, data_type, is_nullable, column_default, comment, '
+            'character_maximum_length, numeric_precision, numeric_scale '
+            f'from {info_schema(db, "columns")} '
+            'where table_schema = %s and table_name = %s order by ordinal_position',
             (real_schema, real_name),
         )
         columns = cs.fetchall()
