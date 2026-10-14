@@ -92,6 +92,14 @@ the versions from this skill's `scripts/` folder into that project folder:
   the role path that gives them access; `--privilege SELECT` filters to
   one privilege. Grants on the object only - querying it also needs
   USAGE on the database and schema
+- `freshness.py` — "when did data last arrive?" from the data itself: for
+  every DATE/TIMESTAMP column (or one named column) the newest value at or
+  before now, its age, and rows in the last 24 hours / 7 days, freshest
+  first; plus the table's `last_altered` (any write). Future-dated rows
+  are left out and reported separately. TIMESTAMP_NTZ is treated as UTC
+  (`--ntz-timezone` to change). Text columns holding dates aren't
+  detected. Different from `recent_tables.py`, which only uses
+  `last_altered` metadata
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -157,6 +165,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - "Who can see/edit this table?", "does role X have access?", "which
      users can read this?" → `show_grants.py` (add `--users` for people,
      `--privilege SELECT` for read access only)
+   - "Is this table's data stale?", "when did data last land?", "is the
+     Airbyte sync still bringing in rows?" → `freshness.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -206,6 +216,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `--diff-only` to hide matches, `--skip-views` if views are big)
    - Access: `python show_grants.py SCHEMA.TABLE_NAME` or
      `python show_grants.py SCHEMA.TABLE_NAME --privilege SELECT --users`
+   - Data freshness: `python freshness.py SCHEMA.TABLE_NAME` (or add a
+     column name to check just that one)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
