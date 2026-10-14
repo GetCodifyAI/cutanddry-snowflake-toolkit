@@ -28,7 +28,8 @@ load_dotenv()
 REQUIRED = ["SNOWFLAKE_ACCOUNT", "SNOWFLAKE_USER", "SNOWFLAKE_PASSWORD", "SNOWFLAKE_WAREHOUSE"]
 
 
-def get_connection():
+def get_connection(**extra):
+    """Connect using the .env credentials. `extra` is passed through to snowflake.connector.connect()."""
     missing = [k for k in REQUIRED if not os.getenv(k)]
     if missing:
         raise SystemExit(
@@ -44,6 +45,7 @@ def get_connection():
         role=os.getenv("SNOWFLAKE_ROLE") or None,
         database=os.getenv("SNOWFLAKE_DATABASE") or None,
         schema=os.getenv("SNOWFLAKE_SCHEMA") or None,
+        **extra,
     )
 
 

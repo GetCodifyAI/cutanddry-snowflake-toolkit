@@ -52,6 +52,14 @@ the versions from this skill's `scripts/` folder into that project folder:
   count, % of rows and cumulative % (NULL counted as a value); `--limit`
   (default 20), `--sample N` for very large tables. Column name is
   case-insensitive
+- `query_history.py` — lists recent queries (last 7 days at most) from
+  `INFORMATION_SCHEMA.QUERY_HISTORY`: start time, user, warehouse, status,
+  seconds, rows, query text. Defaults to the user's own queries from the
+  last 24 hours (fast, ~1 second). Filters: `--failed`, `--min-seconds S`,
+  `--search TEXT`, `--warehouse NAME`; `--slowest` sorts by duration;
+  `--hours` (max 167); `--user NAME` or `--all-users` for other people's
+  queries. `--all-users` without `--warehouse` is slow (~30 seconds per day
+  of history) - prefer pairing it with `--warehouse` or a small `--hours`
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -104,6 +112,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      many distinct values, value ranges per column) → `profile_table.py`
    - What values a specific column holds and how often (e.g. "what statuses
      are there", "which vendor has the most orders") → `top_values.py`
+   - "Why was that slow?", "what failed?", "what ran on this warehouse?",
+     "what did I/someone run recently?" → `query_history.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -134,6 +144,12 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python top_values.py SCHEMA.TABLE_NAME COLUMN` (add `--limit`/`-n` for
      more/fewer than the default 20; quote column names with spaces, e.g.
      `python top_values.py MYSCHEMA.MYTABLE "Billing Status"`)
+   - Recent queries: `python query_history.py` (yours, past 24 hours), e.g.
+     `python query_history.py --failed`,
+     `python query_history.py --slowest --hours 72`,
+     `python query_history.py --search ORDERS`,
+     `python query_history.py --all-users --warehouse SOME_WH`
+     (`--output` adds full query text, query IDs and error messages)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
