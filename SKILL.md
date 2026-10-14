@@ -58,6 +58,9 @@ the versions from this skill's `scripts/` folder into that project folder:
   of them, and for tables/views present in both, columns that were added,
   removed, or changed type/nullability - useful for versioned schema copies
   (e.g. `DTAM_V2` vs `DTAM_V3`)
+- `list_schemas.py` — lists every schema in the database with table/view
+  counts, estimated size, and created/last_altered timestamps - a quick
+  overview before drilling into one schema
 - `.env.template` — template for credentials; the user copies this to `.env`
   and fills in real values (account identifier, username, password,
   warehouse, role, database). Never fill in or guess credentials yourself —
@@ -78,9 +81,11 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
 ## The actual workflow, every time the user asks for data or structure
 
 1. **Figure out what they want**:
-   - Browse what's available → `list_tables.py` (optionally scoped to one
-     schema), or `search_tables.py <partial_name>` if they only remember part
-     of a table's name
+   - Get the lay of the land across the whole database (what schemas exist,
+     how big each is) → `list_schemas.py`
+   - Browse what's available in one schema → `list_tables.py` (optionally
+     scoped to one schema), or `search_tables.py <partial_name>` if they
+     only remember part of a table's name
    - Sample rows from a known table → `query_table.py`
    - Understand a table/view's shape (columns, types, nullability, row
      count, size, timestamps) → `describe_table.py`
@@ -96,6 +101,7 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
 
 2. **Give the exact command**, assuming they're in the folder with these
    scripts and (if using a venv) have it activated:
+   - Overview of all schemas: `python list_schemas.py`
    - Browse: `python list_tables.py` or `python list_tables.py --schema SOME_SCHEMA`
    - Search by table name: `python search_tables.py monday`
    - Search by column name: `python search_columns.py email`

@@ -64,6 +64,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, and columns added/removed/changed on tables present in both | `python diff_schema.py DTAM_V2 DTAM_V3` |
+| `list_schemas.py` | Lists every schema in the database with table/view counts, estimated size, created/last_altered | `python list_schemas.py` |
 
 All scripts accept schema/table names case-insensitively — they resolve the
 real stored case internally via `INFORMATION_SCHEMA`, so lowercase or
