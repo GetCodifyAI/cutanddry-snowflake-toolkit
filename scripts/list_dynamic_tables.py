@@ -13,23 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes
-
-
-def resolve_schema(conn, db, schema):
-    """Look up a schema by name, tolerant of case. Returns the exact stored case."""
-    cs = conn.cursor()
-    cs.execute(
-        f'select schema_name from "{db}".information_schema.schemata where schema_name ilike %s',
-        (schema,),
-    )
-    rows = cs.fetchall()
-    if not rows:
-        raise SystemExit(f"No schema matching '{schema}' found in {db}.")
-    if len(rows) > 1:
-        options = ", ".join(r[0] for r in rows)
-        raise SystemExit(f"Multiple schemas matching '{schema}': {options}. Be more specific.")
-    return rows[0][0]
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema
 
 
 def main():

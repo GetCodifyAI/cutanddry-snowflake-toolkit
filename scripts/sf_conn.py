@@ -80,6 +80,26 @@ def resolve_object(conn, schema, name, database=None):
     return real_schema, real_name, kind_from_type(table_type)
 
 
+def resolve_schema(conn, db, schema):
+    """
+    Look up a schema by name, tolerant of case. Returns the exact stored
+    case so the caller can safely build a quoted reference. Raises
+    SystemExit with a clear message if there's no match or more than one.
+    """
+    cs = conn.cursor()
+    cs.execute(
+        f'select schema_name from {info_schema(db, "schemata")} where schema_name ilike %s',
+        (schema,),
+    )
+    rows = cs.fetchall()
+    if not rows:
+        raise SystemExit(f"No schema matching '{schema}' found in {db}.")
+    if len(rows) > 1:
+        options = ", ".join(rows_[0] for rows_ in rows)
+        raise SystemExit(f"Multiple schemas matching '{schema}': {options}. Be more specific.")
+    return rows[0][0]
+
+
 def quoted(db, schema, name):
     return f'"{db}"."{schema}"."{name}"'
 
