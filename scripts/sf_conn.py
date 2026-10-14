@@ -6,6 +6,7 @@ legacy ssl.PROTOCOL_TLSv1 / TLSv1_1 constants have been removed.
 (See snowflakedb/snowflake-connector-python issue #3048.)
 """
 
+import argparse
 import csv
 import os
 import ssl
@@ -65,7 +66,7 @@ def resolve_object(conn, schema, name, database=None):
     cs = conn.cursor()
     cs.execute(
         f'select table_schema, table_name, table_type from {info_schema(db, "tables")} '
-        'where table_schema ilike %s and table_name ilike %s',
+        'where upper(table_schema) = upper(%s) and upper(table_name) = upper(%s)',
         (schema, name),
     )
     rows = cs.fetchall()
@@ -88,25 +89,57 @@ def resolve_schema(conn, db, schema):
     """
     cs = conn.cursor()
     cs.execute(
-        f'select schema_name from {info_schema(db, "schemata")} where schema_name ilike %s',
+        f'select schema_name from {info_schema(db, "schemata")} where upper(schema_name) = upper(%s)',
         (schema,),
     )
     rows = cs.fetchall()
     if not rows:
         raise SystemExit(f"No schema matching '{schema}' found in {db}.")
     if len(rows) > 1:
-        options = ", ".join(rows_[0] for rows_ in rows)
+        options = ", ".join(r[0] for r in rows)
         raise SystemExit(f"Multiple schemas matching '{schema}': {options}. Be more specific.")
     return rows[0][0]
 
 
-def quoted(db, schema, name):
-    return f'"{db}"."{schema}"."{name}"'
+def quote_ident(name):
+    """Quote a single identifier exactly as stored, escaping any embedded double quotes."""
+    return '"' + name.replace('"', '""') + '"'
+
+
+def quoted(*parts):
+    """Build a fully quoted reference, e.g. quoted(db, schema, name) -> "DB"."SCHEMA"."NAME"."""
+    return ".".join(quote_ident(p) for p in parts)
 
 
 def info_schema(db, view_name):
     """Return the quoted, schema-qualified name of an INFORMATION_SCHEMA view, e.g. info_schema(db, "tables")."""
-    return f'"{db}".information_schema.{view_name}'
+    return f"{quote_ident(db)}.information_schema.{view_name}"
+
+
+def like_contains(text):
+    """
+    Build an ILIKE pattern matching `text` anywhere, with LIKE wildcards in
+    `text` escaped - otherwise the "_" in e.g. "customer_id" would match any
+    character. The query must declare the backslash escape character, as
+    search_tables.py does.
+    """
+    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
+def split_table_arg(parser, value):
+    """Split a SCHEMA.TABLE command-line argument, or exit via parser.error() if it isn't qualified."""
+    if "." not in value:
+        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
+    return value.split(".", 1)
+
+
+def positive_int(value):
+    """argparse type for --limit: an integer >= 1."""
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return n
 
 
 def kind_from_type(table_type):
@@ -142,12 +175,12 @@ def print_table(headers, rows):
 
 
 def write_csv(path, headers, rows):
-    """Write headers+rows to a CSV file at `path`. Returns the row count."""
+    """Write headers+rows to a CSV file at `path` and report how many rows were written."""
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(rows)
-    return len(rows)
+    print(f"Wrote {len(rows):,} rows to {path}")
 
 
 # Known error substrings -> a short, actionable hint printed under the error.

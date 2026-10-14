@@ -12,13 +12,13 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema, positive_int
 
 
 def main():
     parser = argparse.ArgumentParser(description="List tables/views sorted by last_altered, most recent first.")
     parser.add_argument("--schema", help="Only consider this schema (case-insensitive).")
-    parser.add_argument("--limit", "-n", type=int, default=20, help="Max rows to show (default 20).")
+    parser.add_argument("--limit", "-n", type=positive_int, default=20, help="Max rows to show (default 20).")
     parser.add_argument("--output", "-o", help="Also write the full result to this CSV file.")
     args = parser.parse_args()
 
@@ -51,25 +51,19 @@ def main():
 
         display_rows = []
         for schema, name, ttype, row_count, bytes_, last_altered in rows:
-            kind = kind_from_type(ttype)
             display_rows.append([
                 f"{schema}.{name}",
-                kind,
+                kind_from_type(ttype),
                 fmt_count(row_count),
                 fmt_bytes(bytes_),
                 last_altered,
             ])
 
         print_table(["TABLE", "KIND", "ROWS", "SIZE", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(rows)} tables/views, most recently altered first)")
+        print(f"\n({len(rows):,} tables/views, most recently altered first)")
 
         if args.output:
-            n = write_csv(
-                args.output,
-                ["table", "kind", "rows", "size_bytes", "last_altered"],
-                display_rows,
-            )
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["table", "kind", "rows", "size_bytes", "last_altered"], display_rows)
 
     finally:
         conn.close()

@@ -7,7 +7,9 @@ Usage:
   python test_connection.py
 """
 
-from sf_conn import get_connection, current_database, run_cli
+import os
+
+from sf_conn import get_connection, quoted, run_cli
 
 
 def main():
@@ -31,13 +33,10 @@ def main():
         for row in cs.fetchall():
             print(f"  - {row[1]}")
 
-        try:
-            db = current_database()
-        except SystemExit:
-            db = None
+        db = os.getenv("SNOWFLAKE_DATABASE")
         if db:
             print(f"\nSchemas in {db}:")
-            cs.execute(f"show schemas in database {db}")
+            cs.execute(f"show schemas in database {quoted(db)}")
             for row in cs.fetchall():
                 print(f"  - {row[1]}")
 

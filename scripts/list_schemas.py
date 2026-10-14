@@ -31,51 +31,38 @@ def main():
             print(f"No schemas found in {db}.")
             return
 
-        # Table/view counts + sizes per schema. Views report NULL bytes, so
-        # totals here really mean "size of the TABLE kind only" - treat as
-        # an estimate, not a precise total.
+        # Per-schema stats: table/view counts, total size, latest change.
+        # Views report NULL bytes, so the size really means "size of the
+        # tables only" - treat it as an estimate, not a precise total.
         cs.execute(
-            f'select table_schema, table_type, count(*), sum(bytes) '
+            f'select table_schema, table_type, count(*), sum(bytes), max(last_altered) '
             f'from {info_schema(db, "tables")} group by table_schema, table_type'
         )
-        counts_by_schema = {}
-        for schema, ttype, cnt, total_bytes in cs.fetchall():
-            kind = kind_from_type(ttype)
-            d = counts_by_schema.setdefault(schema, {})
-            prev_cnt, prev_bytes = d.get(kind, (0, 0))
-            d[kind] = (prev_cnt + cnt, prev_bytes + (total_bytes or 0))
-
-        cs.execute(
-            f'select table_schema, max(last_altered) from {info_schema(db, "tables")} group by table_schema'
-        )
-        last_altered_by_schema = dict(cs.fetchall())
+        stats = {}  # schema -> {"TABLE": n, "VIEW": n, "bytes": n, "last_altered": ts}
+        for schema, ttype, cnt, total_bytes, last_altered in cs.fetchall():
+            s = stats.setdefault(schema, {"TABLE": 0, "VIEW": 0, "bytes": 0, "last_altered": None})
+            s[kind_from_type(ttype)] += cnt
+            s["bytes"] += total_bytes or 0
+            if last_altered and (s["last_altered"] is None or last_altered > s["last_altered"]):
+                s["last_altered"] = last_altered
 
         display_rows = []
         for schema, created in schema_rows:
-            counts = counts_by_schema.get(schema, {})
-            table_count, _ = counts.get("TABLE", (0, 0))
-            view_count, _ = counts.get("VIEW", (0, 0))
-            total_bytes = sum(b for _, b in counts.values())
-            last_altered = last_altered_by_schema.get(schema)
+            s = stats.get(schema, {"TABLE": 0, "VIEW": 0, "bytes": 0, "last_altered": None})
             display_rows.append([
                 schema,
-                fmt_count(table_count),
-                fmt_count(view_count),
-                fmt_bytes(total_bytes),
+                fmt_count(s["TABLE"]),
+                fmt_count(s["VIEW"]),
+                fmt_bytes(s["bytes"]),
                 created,
-                last_altered,
+                s["last_altered"],
             ])
 
         print_table(["SCHEMA", "TABLES", "VIEWS", "SIZE", "CREATED", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(display_rows)} schemas)")
+        print(f"\n({len(display_rows):,} schemas)")
 
         if args.output:
-            n = write_csv(
-                args.output,
-                ["schema", "tables", "views", "size_bytes", "created", "last_altered"],
-                display_rows,
-            )
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["schema", "tables", "views", "size_bytes", "created", "last_altered"], display_rows)
 
     finally:
         conn.close()

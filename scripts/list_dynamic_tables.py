@@ -13,7 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted
 
 
 def main():
@@ -29,9 +29,9 @@ def main():
         cs = conn.cursor()
         if args.schema:
             real_schema = resolve_schema(conn, db, args.schema)
-            cs.execute(f'show dynamic tables in schema "{db}"."{real_schema}"')
+            cs.execute(f"show dynamic tables in schema {quoted(db, real_schema)}")
         else:
-            cs.execute(f'show dynamic tables in database "{db}"')
+            cs.execute(f"show dynamic tables in database {quoted(db)}")
 
         # SHOW DYNAMIC TABLES isn't an INFORMATION_SCHEMA select, so column
         # order/count can vary across Snowflake versions - read names off
@@ -65,11 +65,10 @@ def main():
 
         headers = ["TABLE", "TARGET_LAG", "WAREHOUSE", "REFRESH_MODE", "STATE", "ROWS", "SIZE", "DATA_TIMESTAMP"]
         print_table(headers, display_rows)
-        print(f"\n({len(rows)} dynamic tables)")
+        print(f"\n({len(rows):,} dynamic tables)")
 
         if args.output:
-            n = write_csv(args.output, [h.lower() for h in headers], display_rows)
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, [h.lower() for h in headers], display_rows)
 
     finally:
         conn.close()

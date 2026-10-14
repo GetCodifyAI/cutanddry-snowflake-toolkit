@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes
 
 
 def main():
@@ -20,10 +20,7 @@ def main():
     parser.add_argument("--output", "-o", help="Also write the column list to this CSV file.")
     args = parser.parse_args()
 
-    if "." not in args.table:
-        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
-
-    schema, name = args.table.split(".", 1)
+    schema, name = split_table_arg(parser, args.table)
     db = current_database()
 
     conn = get_connection()
@@ -41,9 +38,7 @@ def main():
         row_count, bytes_, created, last_altered, table_comment = cs.fetchone()
 
         print(f"{real_schema}.{real_name}  [{kind}]")
-        rows_display = fmt_count(row_count)
-        size_display = fmt_bytes(bytes_)
-        print(f"  rows: {rows_display}   size: {size_display}")
+        print(f"  rows: {fmt_count(row_count)}   size: {fmt_bytes(bytes_)}")
         print(f"  created: {created}   last_altered: {last_altered}")
         if table_comment:
             print(f"  comment: {table_comment}")
@@ -69,15 +64,10 @@ def main():
             display_rows.append([col_name, type_display, nullable, default or "", comment or ""])
 
         print_table(["COLUMN", "TYPE", "NULLABLE", "DEFAULT", "COMMENT"], display_rows)
-        print(f"\n({len(columns)} columns)")
+        print(f"\n({len(columns):,} columns)")
 
         if args.output:
-            n = write_csv(
-                args.output,
-                ["column", "type", "nullable", "default", "comment"],
-                display_rows,
-            )
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["column", "type", "nullable", "default", "comment"], display_rows)
 
     finally:
         conn.close()

@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, like_contains
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
         cs.execute(
             'select table_schema, table_name, table_type, row_count, last_altered '
             f'from {info_schema(db, "tables")} '
-            'where table_name ilike %s order by table_schema, table_name',
-            (f"%{args.pattern}%",),
+            "where table_name ilike %s escape '\\\\' order by table_schema, table_name",
+            (like_contains(args.pattern),),
         )
         rows = cs.fetchall()
 
@@ -40,23 +40,17 @@ def main():
             print(f"No tables or views matching '{args.pattern}' found in {db}.")
             return
 
-        display_rows = []
-        for schema, name, ttype, row_count, last_altered in rows:
-            kind = kind_from_type(ttype)
-            rows_display = fmt_count(row_count)
-            display_rows.append([f"{schema}.{name}", kind, rows_display, last_altered])
+        display_rows = [
+            [f"{schema}.{name}", kind_from_type(ttype), fmt_count(row_count), last_altered]
+            for schema, name, ttype, row_count, last_altered in rows
+        ]
 
         print(f"Matches for '{args.pattern}' in {db}:\n")
         print_table(["TABLE", "KIND", "ROWS", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(rows)} matches)")
+        print(f"\n({len(rows):,} matches)")
 
         if args.output:
-            n = write_csv(
-                args.output,
-                ["schema", "name", "type", "row_count", "last_altered"],
-                rows,
-            )
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["schema", "name", "type", "row_count", "last_altered"], rows)
 
     finally:
         conn.close()

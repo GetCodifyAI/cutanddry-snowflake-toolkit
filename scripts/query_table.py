@@ -15,38 +15,33 @@ Examples:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, quoted, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, print_table, write_csv, run_cli
 
 
 def main():
     parser = argparse.ArgumentParser(description="Sample rows from a table or view.")
     parser.add_argument("table", help="Schema-qualified table/view name, e.g. PUBLIC.ORDERS")
-    parser.add_argument("--limit", "-n", type=int, default=10, help="Max rows to return (default 10).")
+    parser.add_argument("--limit", "-n", type=positive_int, default=10, help="Max rows to return (default 10).")
     parser.add_argument("--output", "-o", help="Also write the full result to this CSV file.")
     args = parser.parse_args()
 
-    if "." not in args.table:
-        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
-
-    schema, name = args.table.split(".", 1)
+    schema, name = split_table_arg(parser, args.table)
     db = current_database()
 
     conn = get_connection()
     try:
         cs = conn.cursor()
-        real_schema, real_name, kind = resolve_object(conn, schema, name, db)
-        full_name = quoted(db, real_schema, real_name)
+        real_schema, real_name, _ = resolve_object(conn, schema, name, db)
 
-        cs.execute(f"select * from {full_name} limit {args.limit}")
+        cs.execute(f"select * from {quoted(db, real_schema, real_name)} limit %s", (args.limit,))
         cols = [d[0] for d in cs.description]
         rows = cs.fetchall()
 
         print_table(cols, rows)
-        print(f"\n({len(rows)} rows)")
+        print(f"\n({len(rows):,} rows)")
 
         if args.output:
-            n = write_csv(args.output, cols, rows)
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, cols, rows)
 
     finally:
         conn.close()

@@ -10,7 +10,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, quoted, run_cli
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, quoted, run_cli
 
 
 def main():
@@ -19,10 +19,7 @@ def main():
     parser.add_argument("--output", "-o", help="Also write the DDL to this file (e.g. table.sql).")
     args = parser.parse_args()
 
-    if "." not in args.table:
-        parser.error("table must be schema-qualified, e.g. PUBLIC.ORDERS")
-
-    schema, name = args.table.split(".", 1)
+    schema, name = split_table_arg(parser, args.table)
     db = current_database()
 
     conn = get_connection()

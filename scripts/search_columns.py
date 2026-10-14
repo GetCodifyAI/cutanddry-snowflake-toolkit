@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, like_contains
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
         cs.execute(
             'select table_schema, table_name, column_name, data_type, is_nullable '
             f'from {info_schema(db, "columns")} '
-            'where column_name ilike %s order by table_schema, table_name, ordinal_position',
-            (f"%{args.pattern}%",),
+            "where column_name ilike %s escape '\\\\' order by table_schema, table_name, ordinal_position",
+            (like_contains(args.pattern),),
         )
         rows = cs.fetchall()
 
@@ -47,15 +47,10 @@ def main():
 
         print(f"Columns matching '{args.pattern}' in {db}:\n")
         print_table(["TABLE", "COLUMN", "TYPE", "NULLABLE"], display_rows)
-        print(f"\n({len(rows)} matches)")
+        print(f"\n({len(rows):,} matches)")
 
         if args.output:
-            n = write_csv(
-                args.output,
-                ["schema", "table", "column", "data_type", "is_nullable"],
-                rows,
-            )
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["schema", "table", "column", "data_type", "is_nullable"], rows)
 
     finally:
         conn.close()

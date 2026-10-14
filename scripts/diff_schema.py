@@ -16,13 +16,13 @@ from sf_conn import get_connection, current_database, print_table, write_csv, ru
 
 
 def fetch_tables(conn, db, schema):
-    """Return {table_name: kind} for every table/view in a schema."""
+    """Return the set of table/view names in a schema."""
     cs = conn.cursor()
     cs.execute(
-        f'select table_name, table_type from {info_schema(db, "tables")} where table_schema = %s',
+        f'select table_name from {info_schema(db, "tables")} where table_schema = %s',
         (schema,),
     )
-    return {name: ttype for name, ttype in cs.fetchall()}
+    return {name for (name,) in cs.fetchall()}
 
 
 def fetch_columns(conn, db, schema):
@@ -56,9 +56,9 @@ def main():
         tables_a = fetch_tables(conn, db, real_a)
         tables_b = fetch_tables(conn, db, real_b)
 
-        only_in_a = sorted(set(tables_a) - set(tables_b))
-        only_in_b = sorted(set(tables_b) - set(tables_a))
-        common = sorted(set(tables_a) & set(tables_b))
+        only_in_a = sorted(tables_a - tables_b)
+        only_in_b = sorted(tables_b - tables_a)
+        common = sorted(tables_a & tables_b)
 
         cols_a = fetch_columns(conn, db, real_a)
         cols_b = fetch_columns(conn, db, real_b)
@@ -100,11 +100,10 @@ def main():
 
         print(f"Diff: {real_a} vs {real_b}\n")
         print_table(["DIFF", "OBJECT", "DETAIL"], display_rows)
-        print(f"\n({len(display_rows)} differences; {len(common)} tables/views compared in common)")
+        print(f"\n({len(display_rows):,} differences; {len(common):,} tables/views compared in common)")
 
         if args.output:
-            n = write_csv(args.output, ["diff", "object", "detail"], display_rows)
-            print(f"Wrote {n} rows to {args.output}")
+            write_csv(args.output, ["diff", "object", "detail"], display_rows)
 
     finally:
         conn.close()

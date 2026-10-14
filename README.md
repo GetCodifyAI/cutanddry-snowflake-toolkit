@@ -23,7 +23,7 @@ This repo can also be used as a **Claude Skill** (see [Using this with Claude](#
    | `SNOWFLAKE_PASSWORD` | yes | your Snowflake password |
    | `SNOWFLAKE_WAREHOUSE` | yes | the warehouse to run queries on |
    | `SNOWFLAKE_ROLE` | no | ideally a role granted only `SELECT`/`USAGE` privileges |
-   | `SNOWFLAKE_DATABASE` | no | leave blank to browse everything; set it to scope all scripts to one database |
+   | `SNOWFLAKE_DATABASE` | yes* | the database every script works in. *Only `test_connection.py` runs without it |
    | `SNOWFLAKE_SCHEMA` | no | optional default schema |
 
 3. `scripts/.env` is already listed in `.gitignore` — it never gets committed. Never share this file or paste its contents anywhere public.
@@ -86,8 +86,9 @@ manual quoting. Views are treated identically to tables throughout.
 - `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, and
   `recent_tables.py`. Scopes the listing to one schema (case-insensitive).
 
-Terminal output is always printed as an aligned, column-width-aware table
-regardless of whether `--output` is also used.
+Terminal output is printed the same way whether or not `--output` is used:
+an aligned, column-width-aware table (or, for `list_tables.py`, a list
+grouped by schema).
 
 ## Using this with Claude
 
