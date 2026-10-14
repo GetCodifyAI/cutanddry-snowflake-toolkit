@@ -8,6 +8,7 @@ legacy ssl.PROTOCOL_TLSv1 / TLSv1_1 constants have been removed.
 
 import os
 import ssl
+import sys
 
 if not hasattr(ssl, "PROTOCOL_TLSv1"):
     ssl.PROTOCOL_TLSv1 = -1001  # unique sentinel, must not collide with real constants
@@ -16,6 +17,7 @@ if not hasattr(ssl, "PROTOCOL_TLSv1_1"):
 
 from dotenv import load_dotenv
 import snowflake.connector
+import snowflake.connector.errors as sf_errors
 
 load_dotenv()
 
@@ -109,3 +111,43 @@ def write_csv(path, headers, rows):
         writer.writerow(headers)
         writer.writerows(rows)
     return len(rows)
+
+
+# Known error substrings -> a short, actionable hint printed under the error.
+_ERROR_HINTS = [
+    ("Incorrect username or password",
+     "Double-check SNOWFLAKE_USER / SNOWFLAKE_PASSWORD in scripts/.env."),
+    ("does not exist or not authorized",
+     "Check the schema/table name - try search_tables.py or search_columns.py to find it."),
+    ("Object does not exist",
+     "Check the schema/table name - try search_tables.py or search_columns.py to find it."),
+    ("JWT token is invalid", "Your Snowflake session/token has expired - just re-run the command."),
+    ("getaddrinfo failed", "Check SNOWFLAKE_ACCOUNT in scripts/.env and your network connection."),
+    ("Name or service not known", "Check SNOWFLAKE_ACCOUNT in scripts/.env and your network connection."),
+]
+
+
+def run_cli(main_func):
+    """
+    Run a script's main() with friendly error handling, so connection/auth/
+    SQL problems print a short, clear message instead of a raw Python
+    traceback. argparse's own errors and Ctrl-C still behave normally.
+    """
+    try:
+        main_func()
+    except SystemExit:
+        raise
+    except KeyboardInterrupt:
+        print("\nCancelled.")
+        sys.exit(130)
+    except sf_errors.Error as e:
+        msg = str(e)
+        print(f"Snowflake error: {msg}")
+        for substr, hint in _ERROR_HINTS:
+            if substr in msg:
+                print(f"  -> {hint}")
+                break
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)

@@ -15,7 +15,7 @@ Examples:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, quoted, print_table, write_csv
+from sf_conn import get_connection, current_database, resolve_object, quoted, print_table, write_csv, run_cli
 
 
 def main():
@@ -53,4 +53,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    run_cli(main)

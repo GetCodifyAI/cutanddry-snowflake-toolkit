@@ -120,7 +120,11 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
 
 5. **If they paste an error instead of data**, diagnose it — see the common
    failure modes below before guessing. Most of what comes up has a known
-   fix.
+   fix. Note that every script now runs through `run_cli()` in `sf_conn.py`,
+   which catches Snowflake/connection errors and prints a short
+   `Snowflake error: ...` line (plus a one-line hint for the common cases
+   below) instead of a raw Python traceback — so what gets pasted back to
+   you should already be fairly readable.
 
 ## Known failure modes and fixes (encountered and solved before)
 
@@ -182,12 +186,3 @@ tool, stop immediately — this is the sandbox network restriction, not a
 real connectivity problem, and no amount of retrying or script-tweaking will
 fix it. Hand the command back to the user to run locally instead.
 
-## Security notes
-
-- Never write real credentials into anything that leaves the user's own
-  machine (this skill bundle, memory, etc.) — only template placeholders.
-- These scripts are read-only by construction (`select` /
-  `show tables` / `show schemas` only). Don't add write/DDL queries to them
-  without the user explicitly asking for that and understanding the risk.
-- If a password is ever pasted in plain chat, mention (once, briefly) that
-  rotating it afterward is good practice — don't nag about it repeatedly.
