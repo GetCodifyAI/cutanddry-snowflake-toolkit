@@ -65,6 +65,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `top_values.py` | Most frequent values in one column, with count, % and cumulative % (NULL counted as a value) | `python top_values.py PUBLIC.ORDERS STATUS` or `python top_values.py PUBLIC.ORDERS STATUS --limit 50` |
 | `query_history.py` | Recent queries (last 7 days max): start time, user, warehouse, status, seconds, rows, query text. Defaults to your own queries, past 24 hours | `python query_history.py --failed` or `python query_history.py --slowest --hours 72` |
 | `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
+| `list_tasks.py` | Lists tasks with state, schedule, warehouse, last run/result, failures over the past 7 days and next run; `--runs` shows one task's runs with errors | `python list_tasks.py --failing` or `python list_tasks.py --runs DTAM.MY_TASK` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, and columns added/removed/changed on tables present in both | `python diff_schema.py DTAM_V2 DTAM_V3` |
@@ -90,7 +91,7 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `query_history.py`, `run_query.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
@@ -98,7 +99,8 @@ what really keeps it read-only.
   `top_values.py` (how many top values to show, defaults to 20), and
   `query_history.py` (max queries to show, defaults to 20), and
   `run_query.py` (max rows to print, defaults to 50 - `--output` still
-  gets every row). Example:
+  gets every row), and `list_tasks.py --runs` (max runs to show, defaults
+  to 20). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
 - `--sample <N>` — `profile_table.py` and `top_values.py`. Works on a
   random sample of N rows instead of the whole table; useful on very large
@@ -114,7 +116,11 @@ what really keeps it read-only.
   `--warehouse` or a small `--hours` to keep it fast.
 - `--file` / `-f <path>` — `run_query.py`. Read the query from a `.sql`
   file instead of the command line.
-- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, and
+- `list_tasks.py` options — `--failing` (only tasks with recent failures
+  or suspended due to errors), `--runs SCHEMA.TASK` (one task's runs with
+  error messages), `--hours <H>` (run-history window, default and max 167
+  i.e. 7 days).
+- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`, and
   `recent_tables.py`. Scopes the listing to one schema (case-insensitive).
 
 Terminal output is printed the same way whether or not `--output` is used:

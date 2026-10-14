@@ -69,6 +69,14 @@ the versions from this skill's `scripts/` folder into that project folder:
   lowercase/mixed-case identifiers need double quotes (e.g.
   `"airbyte_internal"."JIRA_raw__stream_boards"`); unqualified names
   resolve against `SNOWFLAKE_DATABASE`
+- `list_tasks.py` — lists tasks (scheduled SQL jobs) with state
+  (started/suspended), schedule (cron / interval / "after <parent task>"),
+  warehouse, last run and its result, run and failure counts over the
+  past 7 days, next run, and a note (e.g. "suspended due to errors").
+  `--failing` shows only tasks with recent failures or suspended due to
+  errors; `--schema` scopes it; `--hours` shortens the window (max 167).
+  `--runs SCHEMA.TASK` shows one task's individual runs with error
+  messages. Run history only goes back 7 days
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -125,6 +133,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      "what did I/someone run recently?" → `query_history.py`
    - Anything the other scripts don't cover - joins, filters, aggregates,
      custom reports → write the SELECT for them and use `run_query.py`
+   - Scheduled jobs: "what tasks do we have", "did the nightly job run",
+     "why did that task fail", "what's suspended" → `list_tasks.py`
+     (then `--runs SCHEMA.TASK` for one task's errors)
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -165,6 +176,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      or, for anything longer than a line, have them save it to a file and
      run `python run_query.py --file query.sql` (avoids shell-quoting
      problems with double-quoted identifiers)
+   - Tasks: `python list_tasks.py` or `python list_tasks.py --failing`,
+     then `python list_tasks.py --runs SCHEMA.TASK_NAME` for one task's
+     runs and errors (`--output` adds condition, owner, last error and the
+     task's full SQL definition)
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
