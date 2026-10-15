@@ -340,7 +340,7 @@ def write_csv(path, headers, rows):
         writer = csv.writer(f)
         writer.writerow(headers)
         writer.writerows(rows)
-    print(f"Wrote {len(rows):,} rows to {path}")
+    print(f"Wrote {plural(len(rows), 'row')} to {path}")
 
 
 # Known error substrings -> a short, actionable hint printed under the error.
