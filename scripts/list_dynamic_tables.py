@@ -13,7 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted, fmt_value, plural
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted, fmt_value, plural, show_rows
 
 
 def main():
@@ -29,38 +29,29 @@ def main():
         cs = conn.cursor()
         if args.schema:
             real_schema = resolve_schema(conn, db, args.schema)
-            cs.execute(f"show dynamic tables in schema {quoted(db, real_schema)}")
+            rows = show_rows(cs, f"show dynamic tables in schema {quoted(db, real_schema)}")
         else:
-            cs.execute(f"show dynamic tables in database {quoted(db)}")
-
-        # SHOW DYNAMIC TABLES isn't an INFORMATION_SCHEMA select, so column
-        # order/count can vary across Snowflake versions - read names off
-        # the cursor description instead of assuming a fixed layout.
-        columns = [c[0].lower() for c in cs.description]
-        rows = cs.fetchall()
+            rows = show_rows(cs, f"show dynamic tables in database {quoted(db)}")
 
         if not rows:
             scope = f"schema '{args.schema}'" if args.schema else f"database {db}"
             print(f"No dynamic tables found in {scope}.")
             return
 
-        def col(row, name):
-            return row[columns.index(name)] if name in columns else None
-
         display_rows = []
         for row in rows:
-            schema_name = col(row, "schema_name")
-            name = col(row, "name")
+            schema_name = row.get("schema_name")
+            name = row.get("name")
             table_display = f"{schema_name}.{name}" if schema_name else name
             display_rows.append([
                 table_display,
-                col(row, "target_lag") or "",
-                col(row, "warehouse") or "",
-                col(row, "refresh_mode") or "",
-                col(row, "scheduling_state") or "",
-                fmt_count(col(row, "rows")),
-                fmt_bytes(col(row, "bytes")),
-                fmt_value(col(row, "data_timestamp")),
+                row.get("target_lag") or "",
+                row.get("warehouse") or "",
+                row.get("refresh_mode") or "",
+                row.get("scheduling_state") or "",
+                fmt_count(row.get("rows")),
+                fmt_bytes(row.get("bytes")),
+                fmt_value(row.get("data_timestamp")),
             ])
 
         headers = ["TABLE", "TARGET_LAG", "WAREHOUSE", "REFRESH_MODE", "STATE", "ROWS", "SIZE", "DATA_TIMESTAMP"]

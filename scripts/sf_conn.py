@@ -162,6 +162,18 @@ def resolve_column(conn, db, schema, table, column):
     return rows[0]
 
 
+def show_rows(cs, sql):
+    """
+    Run a SHOW command and return its rows as dicts keyed by lowercase
+    column name. SHOW output isn't an INFORMATION_SCHEMA select - its
+    columns can change between Snowflake versions - so they're read off
+    the cursor rather than assumed.
+    """
+    cs.execute(sql)
+    columns = [c[0].lower() for c in cs.description]
+    return [dict(zip(columns, row)) for row in cs.fetchall()]
+
+
 def quote_ident(name):
     """Quote a single identifier exactly as stored, escaping any embedded double quotes."""
     return '"' + name.replace('"', '""') + '"'

@@ -19,7 +19,7 @@ Usage:
 import argparse
 import json
 
-from sf_conn import get_connection, current_database, resolve_schema, quoted, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_value, truncate, plural
+from sf_conn import get_connection, current_database, resolve_schema, quoted, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_value, truncate, plural, show_rows
 
 # INFORMATION_SCHEMA.TASK_HISTORY rejects a start time 7 full days back or earlier.
 MAX_HOURS = 167
@@ -28,11 +28,7 @@ SUSPEND_REASONS = {"SUSPENDED_DUE_TO_ERRORS": "suspended due to errors", "USER_S
 
 def show_tasks(cs, db, schema=None):
     """Run SHOW TASKS and return a list of dicts keyed by lowercase column name."""
-    cs.execute(f"show tasks in schema {quoted(db, schema)}" if schema else f"show tasks in database {quoted(db)}")
-    # SHOW output isn't an INFORMATION_SCHEMA select, so read column names
-    # off the cursor rather than assuming a fixed layout.
-    columns = [c[0].lower() for c in cs.description]
-    return [dict(zip(columns, row)) for row in cs.fetchall()]
+    return show_rows(cs, f"show tasks in schema {quoted(db, schema)}" if schema else f"show tasks in database {quoted(db)}")
 
 
 def history_source(db, hours, error_only=False):

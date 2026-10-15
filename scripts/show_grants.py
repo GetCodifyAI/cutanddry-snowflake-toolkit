@@ -16,7 +16,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, quoted, quote_ident, print_table, write_csv, run_cli, fmt_value, truncate, plural
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, quoted, quote_ident, print_table, write_csv, run_cli, fmt_value, truncate, plural, show_rows
 
 import snowflake.connector.errors as sf_errors
 
@@ -32,11 +32,8 @@ def role_members(cs, role, cache):
     """
     if role not in cache:
         try:
-            cs.execute(f"show grants of role {quote_ident(role)}")
-            columns = [c[0].lower() for c in cs.description]
             users, roles = set(), set()
-            for row in cs.fetchall():
-                r = dict(zip(columns, row))
+            for r in show_rows(cs, f"show grants of role {quote_ident(role)}"):
                 (users if r["granted_to"] == "USER" else roles if r["granted_to"] == "ROLE" else set()).add(r["grantee_name"])
             cache[role] = (users, roles)
         except sf_errors.ProgrammingError:
@@ -90,9 +87,7 @@ def main():
         real_schema, real_name, _ = resolve_object(conn, schema, name, db)
 
         # SHOW GRANTS ON TABLE works for views and dynamic tables too.
-        cs.execute(f"show grants on table {quoted(db, real_schema, real_name)}")
-        columns = [c[0].lower() for c in cs.description]
-        grants = [dict(zip(columns, row)) for row in cs.fetchall()]
+        grants = show_rows(cs, f"show grants on table {quoted(db, real_schema, real_name)}")
         object_type = grants[0]["granted_on"].replace("_", " ") if grants else "OBJECT"
         if args.privilege:
             grants = [g for g in grants if g["privilege"].upper() == args.privilege.upper()]
