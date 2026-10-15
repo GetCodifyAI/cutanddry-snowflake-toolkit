@@ -6,6 +6,7 @@ which schema it lives in.
 
 Usage:
   python search_tables.py <partial_name>
+  python search_tables.py <partial_name> --schema SOME_SCHEMA   # just one schema
   python search_tables.py <partial_name> --output matches.csv
 
 Example:
@@ -14,12 +15,13 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_value, like_contains, plural
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_value, like_contains, plural, resolve_schema
 
 
 def main():
     parser = argparse.ArgumentParser(description="Search for tables/views by partial name match.")
     parser.add_argument("pattern", help="Partial table/view name to search for.")
+    parser.add_argument("--schema", help="Only search this schema (case-insensitive).")
     parser.add_argument("--output", "-o", help="Also write the full result to this CSV file.")
     args = parser.parse_args()
 
@@ -28,16 +30,21 @@ def main():
     conn = get_connection()
     try:
         cs = conn.cursor()
+        schema_filter, params = "", [like_contains(args.pattern)]
+        if args.schema:
+            schema_filter = " and table_schema = %s"
+            params.append(resolve_schema(conn, db, args.schema))
         cs.execute(
             'select table_schema, table_name, table_type, row_count, last_altered '
             f'from {info_schema(db, "tables")} '
-            "where table_name ilike %s escape '\\\\' order by table_schema, table_name",
-            (like_contains(args.pattern),),
+            f"where table_name ilike %s escape '\\\\'{schema_filter} order by table_schema, table_name",
+            tuple(params),
         )
         rows = cs.fetchall()
 
+        where = f"{db}.{params[1]}" if args.schema else db
         if not rows:
-            print(f"No tables or views matching '{args.pattern}' found in {db}.")
+            print(f"No tables or views matching '{args.pattern}' found in {where}.")
             return
 
         display_rows = [
@@ -45,7 +52,7 @@ def main():
             for schema, name, ttype, row_count, last_altered in rows
         ]
 
-        print(f"Matches for '{args.pattern}' in {db}:\n")
+        print(f"Matches for '{args.pattern}' in {where}:\n")
         print_table(["TABLE", "KIND", "ROWS", "LAST_ALTERED"], display_rows)
         print(f"\n({plural(len(rows), 'match', 'matches')})")
 

@@ -139,8 +139,9 @@ what really keeps it read-only.
   `--last <N>` (how many periods back, including the current one; defaults
   to 48 hours / 30 days / 12 weeks / 12 months, max 1,000) and
   `--timezone <TZ>` (the zone periods are counted in, default UTC).
-- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`, and
-  `recent_tables.py`. Scopes the listing to one schema (case-insensitive).
+- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`,
+  `recent_tables.py`, `search_tables.py` and `search_columns.py`. Scopes the
+  listing or search to one schema (case-insensitive).
 
 Terminal output is printed the same way whether or not `--output` is used:
 an aligned, column-width-aware table (or, for `list_tables.py`, a list

@@ -119,9 +119,11 @@ the versions from this skill's `scripts/` folder into that project folder:
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
-  name partially matches a given string, across all schemas
+  name partially matches a given string, across all schemas (`--schema` to
+  search just one)
 - `search_columns.py` — searches the whole database for columns whose name
   partially matches a given string, showing every table/view that has one
+  (`--schema` to search just one)
 - `list_dynamic_tables.py` — lists dynamic tables specifically (via
   `SHOW DYNAMIC TABLES`, distinct from `list_tables.py`'s plain
   tables/views), showing target lag, warehouse, refresh mode, scheduling
