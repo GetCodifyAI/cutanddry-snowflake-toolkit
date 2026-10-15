@@ -1,9 +1,11 @@
 """
 Read-only: compares two schemas in the configured database and reports
 what's different - tables/views present in only one of them, and for
-tables/views present in both, any columns that were added, removed, or
-changed type/nullability. Handy for environments with versioned schema
-copies (e.g. DTAM / DTAM_V2 / DTAM_V3).
+tables/views present in both, any that switched between table and view,
+and any columns that were added, removed, or changed type/nullability.
+Types are compared in full, so NUMBER(38,0) -> NUMBER(10,2) or
+VARCHAR(16) -> VARCHAR(256) counts as a change. Handy for environments
+with versioned schema copies (e.g. DTAM / DTAM_V2 / DTAM_V3).
 
 Usage:
   python diff_schema.py SCHEMA_A SCHEMA_B
@@ -12,30 +14,34 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, resolve_schema, plural
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, resolve_schema, plural, fmt_type, kind_from_type
 
 
 def fetch_tables(conn, db, schema):
-    """Return the set of table/view names in a schema."""
+    """Return {table/view name: 'TABLE' or 'VIEW'} for a schema."""
     cs = conn.cursor()
     cs.execute(
-        f'select table_name from {info_schema(db, "tables")} where table_schema = %s',
+        f'select table_name, table_type from {info_schema(db, "tables")} where table_schema = %s',
         (schema,),
     )
-    return {name for (name,) in cs.fetchall()}
+    return {name: kind_from_type(ttype) for name, ttype in cs.fetchall()}
 
 
 def fetch_columns(conn, db, schema):
-    """Return {table_name: {column_name: (data_type, is_nullable)}} for a schema."""
+    """
+    Return {table_name: {column_name: (full_type, is_nullable)}} for a schema.
+    The full type includes length/precision, so NUMBER(38,0) -> NUMBER(10,2)
+    or VARCHAR(16) -> VARCHAR(256) count as changes.
+    """
     cs = conn.cursor()
     cs.execute(
-        f'select table_name, column_name, data_type, is_nullable '
+        f'select table_name, column_name, data_type, character_maximum_length, numeric_precision, numeric_scale, is_nullable '
         f'from {info_schema(db, "columns")} where table_schema = %s',
         (schema,),
     )
     columns = {}
-    for table_name, col_name, data_type, nullable in cs.fetchall():
-        columns.setdefault(table_name, {})[col_name] = (data_type, nullable)
+    for table_name, col_name, data_type, char_len, num_prec, num_scale, nullable in cs.fetchall():
+        columns.setdefault(table_name, {})[col_name] = (fmt_type(data_type, char_len, num_prec, num_scale), nullable)
     return columns
 
 
@@ -56,9 +62,9 @@ def main():
         tables_a = fetch_tables(conn, db, real_a)
         tables_b = fetch_tables(conn, db, real_b)
 
-        only_in_a = sorted(tables_a - tables_b)
-        only_in_b = sorted(tables_b - tables_a)
-        common = sorted(tables_a & tables_b)
+        only_in_a = sorted(set(tables_a) - set(tables_b))
+        only_in_b = sorted(set(tables_b) - set(tables_a))
+        common = sorted(set(tables_a) & set(tables_b))
 
         cols_a = fetch_columns(conn, db, real_a)
         cols_b = fetch_columns(conn, db, real_b)
@@ -71,6 +77,8 @@ def main():
             display_rows.append(["TABLE_ONLY_IN_B", name, f"only in {real_b}"])
 
         for name in common:
+            if tables_a[name] != tables_b[name]:
+                display_rows.append(["KIND_CHANGED", name, f"{real_a}: {tables_a[name]}  ->  {real_b}: {tables_b[name]}"])
             a_cols = cols_a.get(name, {})
             b_cols = cols_b.get(name, {})
 

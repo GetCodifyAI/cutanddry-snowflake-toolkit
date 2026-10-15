@@ -187,6 +187,15 @@ def fmt_count(n):
     return f"{n:,}" if n is not None else "n/a"
 
 
+def fmt_type(data_type, char_len, num_prec, num_scale):
+    """Full column type from INFORMATION_SCHEMA.COLUMNS parts, e.g. VARCHAR(16), NUMBER(38,0)."""
+    if char_len:
+        return f"{data_type}({char_len})"
+    if num_prec and num_scale is not None:
+        return f"{data_type}({num_prec},{num_scale})"
+    return data_type
+
+
 def plural(n, word, many=None):
     """'1 row' / '2,296 rows': n comma-grouped, then `word`, or its plural (word + 's' unless `many` is given)."""
     return f"{fmt_count(n)} {word if n == 1 else many or word + 's'}"

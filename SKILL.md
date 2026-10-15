@@ -127,9 +127,11 @@ the versions from this skill's `scripts/` folder into that project folder:
   tables/views), showing target lag, warehouse, refresh mode, scheduling
   state, row count, and size, optionally filtered to one schema
 - `diff_schema.py` — compares two schemas: tables/views present in only one
-  of them, and for tables/views present in both, columns that were added,
-  removed, or changed type/nullability - useful for versioned schema copies
-  (e.g. `DTAM_V2` vs `DTAM_V3`)
+  of them, and for tables/views present in both, a switch between table and
+  view (`KIND_CHANGED`) and columns that were added, removed, or changed
+  type/nullability. Types are compared in full, so `NUMBER(38,0)` ->
+  `NUMBER(10,2)` or `VARCHAR(16)` -> `VARCHAR(256)` shows as a change -
+  useful for versioned schema copies (e.g. `DTAM_V2` vs `DTAM_V3`)
 - `list_schemas.py` — lists every schema in the database with table/view
   counts, estimated size, and created/last_altered timestamps - a quick
   overview before drilling into one schema

@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes, fmt_value, plural
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes, fmt_value, plural, fmt_type
 
 
 def main():
@@ -56,12 +56,7 @@ def main():
 
         display_rows = []
         for col_name, data_type, nullable, default, comment, char_len, num_prec, num_scale in columns:
-            type_display = data_type
-            if char_len:
-                type_display = f"{data_type}({char_len})"
-            elif num_prec and num_scale is not None:
-                type_display = f"{data_type}({num_prec},{num_scale})"
-            display_rows.append([col_name, type_display, nullable, default or "", comment or ""])
+            display_rows.append([col_name, fmt_type(data_type, char_len, num_prec, num_scale), nullable, default or "", comment or ""])
 
         print_table(["COLUMN", "TYPE", "NULLABLE", "DEFAULT", "COMMENT"], display_rows)
         print(f"\n({plural(len(columns), 'column')})")
