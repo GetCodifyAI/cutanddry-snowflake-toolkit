@@ -141,6 +141,13 @@ the versions from this skill's `scripts/` folder into that project folder:
   on one side are listed. Columns (and keys) whose types differ are compared
   as text. Refuses to run if the key isn't unique on either side. Slow on
   very wide tables (~1.5 minutes for 742 columns)
+- `warehouse_usage.py` — credits used per warehouse from
+  `SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY` (needs access to the
+  SNOWFLAKE database; a year of history; lags up to 3 hours). Default: last
+  `--days` (30) vs the same number of days before, per warehouse, with
+  change, change %, share of total, cloud-services credits and a TOTAL row.
+  `--by day|week|month` shows the trend (UTC periods) with a bar instead;
+  `--warehouse` limits to one; `--price 3.00` adds dollar cost
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -228,6 +235,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - "When did loads stop?", "did volume drop?", "how many rows per
      day/month?", "are there gaps in the data?" → `daily_counts.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
+   - "Why did the Snowflake bill go up?", "which warehouse costs the most?",
+     "credits per day/month" → `warehouse_usage.py`
    - "What uses this table/column?", "what breaks if I drop/rename/retype
      this?", "which views read from X?" → `find_usages.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
@@ -293,6 +302,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `--timezone America/Los_Angeles` to cut days at local midnight). If it
      says the window is empty, rerun with a larger `--last` or `--by month`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
+   - Credits/cost: `python warehouse_usage.py` (per warehouse, vs previous
+     period), `python warehouse_usage.py --by month --days 365`, or
+     `--warehouse APP --by day`; add `--price <dollars per credit>` for cost
    - Row-level diff: `python diff_rows.py SCHEMA.TABLE_A OTHER_DB.SCHEMA.TABLE_B --key ID`
      (several key columns for a composite key; `--key NODE_ID:ID` if the
      key's name differs in B; check uniqueness first with `find_duplicates.py`)
