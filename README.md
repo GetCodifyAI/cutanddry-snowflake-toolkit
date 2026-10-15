@@ -63,6 +63,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `describe_table.py` | Shows full column definitions (name, type, nullable, default, comment) plus table metadata (row count, size, timestamps) | `python describe_table.py PUBLIC.ORDERS` |
 | `profile_table.py` | Profiles every column: null count/%, distinct count, min/max | `python profile_table.py PUBLIC.ORDERS` or `python profile_table.py PUBLIC.ORDERS --sample 100000` |
 | `top_values.py` | Most frequent values in one column, with count, % and cumulative % (NULL counted as a value) | `python top_values.py PUBLIC.ORDERS STATUS` or `python top_values.py PUBLIC.ORDERS STATUS --limit 50` |
+| `find_duplicates.py` | Checks whether a column (or combination of columns) is unique: how many keys repeat, extra rows they add, and the most-repeated keys | `python find_duplicates.py PUBLIC.ORDERS ORDER_ID` or `python find_duplicates.py PUBLIC.ORDERS ORDER_ID LINE_NO` |
 | `query_history.py` | Recent queries (last 7 days max): start time, user, warehouse, status, seconds, rows, query text. Defaults to your own queries, past 24 hours | `python query_history.py --failed` or `python query_history.py --slowest --hours 72` |
 | `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
 | `list_tasks.py` | Lists tasks with state, schedule, warehouse, last run/result, failures over the past 7 days and next run; `--runs` shows one task's runs with errors | `python list_tasks.py --failing` or `python list_tasks.py --runs DTAM.MY_TASK` |
@@ -94,18 +95,19 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `show_grants.py`, `freshness.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `show_grants.py`, `freshness.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
   to 10), `recent_tables.py` (max rows to show, defaults to 20),
-  `top_values.py` (how many top values to show, defaults to 20), and
+  `top_values.py` (how many top values to show, defaults to 20),
+  `find_duplicates.py` (how many duplicated keys to show, defaults to 20), and
   `query_history.py` (max queries to show, defaults to 20), and
   `run_query.py` (max rows to print, defaults to 50 - `--output` still
   gets every row), and `list_tasks.py --runs` (max runs to show, defaults
   to 20). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
-- `--sample <N>` — `profile_table.py` and `top_values.py`. Works on a
+- `--sample <N>` — `profile_table.py`, `top_values.py` and `find_duplicates.py`. Works on a
   random sample of N rows instead of the whole table; useful on very large
   tables.
 - `--exact` — `profile_table.py`. Exact distinct counts instead of the

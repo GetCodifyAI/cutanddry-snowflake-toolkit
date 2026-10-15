@@ -54,6 +54,11 @@ the versions from this skill's `scripts/` folder into that project folder:
   count, % of rows and cumulative % (NULL counted as a value); `--limit`
   (default 20), `--sample N` for very large tables. Column name is
   case-insensitive
+- `find_duplicates.py` — checks whether a column, or a combination of
+  columns, is unique: total rows, distinct keys, how many keys repeat and
+  the extra rows they add, plus the most-repeated keys with counts (NULL
+  treated as a value); `--limit` (default 20), `--sample N`. Column names
+  are case-insensitive
 - `query_history.py` — lists recent queries (last 7 days at most) from
   `INFORMATION_SCHEMA.QUERY_HISTORY`: start time, user, warehouse, status,
   seconds, rows, query text. Defaults to the user's own queries from the
@@ -154,6 +159,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      many distinct values, value ranges per column) → `profile_table.py`
    - What values a specific column holds and how often (e.g. "what statuses
      are there", "which vendor has the most orders") → `top_values.py`
+   - Whether a column or set of columns is unique / has duplicates (e.g.
+     "is ID really a primary key", "did the sync load rows twice")
+     → `find_duplicates.py`
    - "Why was that slow?", "what failed?", "what ran on this warehouse?",
      "what did I/someone run recently?" → `query_history.py`
    - Anything the other scripts don't cover - joins, filters, aggregates,
@@ -199,6 +207,11 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python top_values.py SCHEMA.TABLE_NAME COLUMN` (add `--limit`/`-n` for
      more/fewer than the default 20; quote column names with spaces, e.g.
      `python top_values.py MYSCHEMA.MYTABLE "Billing Status"`)
+   - Duplicate check: `python find_duplicates.py SCHEMA.TABLE_NAME COLUMN`,
+     or several columns for a combined key, e.g.
+     `python find_duplicates.py PUBLIC.ORDER_LINES ORDER_ID LINE_NO`
+     (add `--limit`/`-n` to show more/fewer than 20 duplicated keys;
+     follow up with `run_query.py` to see the full rows behind a key)
    - Recent queries: `python query_history.py` (yours, past 24 hours), e.g.
      `python query_history.py --failed`,
      `python query_history.py --slowest --hours 72`,
