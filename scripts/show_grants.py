@@ -16,7 +16,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, quoted, quote_ident, print_table, write_csv, run_cli, fmt_value, truncate
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, quoted, quote_ident, print_table, write_csv, run_cli, fmt_value, truncate, plural
 
 import snowflake.connector.errors as sf_errors
 
@@ -126,7 +126,7 @@ def main():
                     fmt_value(e["since"]),
                 ])
             print_table(["ROLE", "GRANTEE_TYPE", "PRIVILEGES", "CAN_REGRANT", "GRANTED_BY", "SINCE"], rows)
-            print(f"\n({len(rows):,} roles - use --users to see which users get access)")
+            print(f"\n({plural(len(rows), 'role')} - use --users to see which users get access)")
             if args.output:
                 write_csv(args.output, ["role", "grantee_type", "privileges", "can_regrant", "granted_by", "since"], rows)
             return
@@ -144,7 +144,7 @@ def main():
                 display_rows.append([user, privileges, truncate("; ".join(paths))])
                 csv_rows.append([user, privileges, "; ".join(paths)])
             print_table(["USER", "PRIVILEGES", "VIA_ROLES"], display_rows)
-            print(f"\n({len(users):,} users - \"A -> B\" means the user holds role A, which was granted role B)")
+            print(f"\n({plural(len(users), 'user')} - \"A -> B\" means the user holds role A, which was granted role B)")
             if args.output:
                 write_csv(args.output, ["user", "privileges", "via_roles"], csv_rows)
         if hidden:

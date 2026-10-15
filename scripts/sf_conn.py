@@ -187,6 +187,11 @@ def fmt_count(n):
     return f"{n:,}" if n is not None else "n/a"
 
 
+def plural(n, word, many=None):
+    """'1 row' / '2,296 rows': n comma-grouped, then `word`, or its plural (word + 's' unless `many` is given)."""
+    return f"{fmt_count(n)} {word if n == 1 else many or word + 's'}"
+
+
 def fmt_bytes(n):
     """Format a byte size for display: comma-grouped with a 'bytes' suffix, or 'n/a' if unknown."""
     return f"{n:,} bytes" if n is not None else "n/a"

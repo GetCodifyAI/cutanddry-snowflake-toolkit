@@ -22,7 +22,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_count, fmt_bytes, fmt_value, truncate, like_contains
+from sf_conn import get_connection, current_database, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_count, fmt_bytes, fmt_value, truncate, like_contains, plural
 
 # Queries made by this script are tagged so they can be left out of its own results.
 QUERY_TAG = "query_history.py"
@@ -126,7 +126,7 @@ def main():
         print(f"Query history - {who}{on}, past {args.hours:,} hours, {sort_note}")
         print()
         print_table(headers, display_rows)
-        print(f"\n({len(rows):,} queries - use --output to get full query text and query IDs)")
+        print(f"\n({plural(len(rows), 'query', 'queries')} - use --output to get full query text and query IDs)")
 
         if args.output:
             write_csv(args.output, ["start", "user", "role", "warehouse", "status", "query_type", "seconds", "rows",

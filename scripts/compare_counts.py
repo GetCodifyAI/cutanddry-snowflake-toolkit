@@ -19,7 +19,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_schema, quoted, info_schema, print_table, write_csv, run_cli, kind_from_type, fmt_count, fmt_pct, truncate
+from sf_conn import get_connection, current_database, resolve_schema, quoted, info_schema, print_table, write_csv, run_cli, kind_from_type, fmt_count, fmt_pct, truncate, plural
 
 import snowflake.connector.errors as sf_errors
 
@@ -122,7 +122,7 @@ def main():
                 if objects[name][1] is None and not args.skip_views:
                     to_count.append((db, schema, name))
         if to_count:
-            print(f"Counting rows in {len(to_count):,} views with COUNT(*)...\n", flush=True)
+            print(f"Counting rows in {plural(len(to_count), 'view')} with COUNT(*)...\n", flush=True)
         counted = count_rows(conn, to_count)
 
         def count_for(db, schema, objects, name):
@@ -166,11 +166,11 @@ def main():
         else:
             print("All row counts match.")
 
-        summary = f"{len(common):,} tables/views in both, {mismatches:,} with different counts"
+        summary = f"{plural(len(common), 'table/view', 'tables/views')} in both, {mismatches:,} with different counts"
         if errors:
             summary += f", {errors:,} couldn't be counted"
         if skipped:
-            summary += f", {skipped:,} views not compared (--skip-views)"
+            summary += f", {plural(skipped, 'view')} not compared (--skip-views)"
         if only_a or only_b:
             summary += f"; {only_a:,} only in {label_a}, {only_b:,} only in {label_b}"
             if not cross_db:

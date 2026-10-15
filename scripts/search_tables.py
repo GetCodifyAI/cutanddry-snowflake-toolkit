@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_value, like_contains
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_value, like_contains, plural
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
 
         print(f"Matches for '{args.pattern}' in {db}:\n")
         print_table(["TABLE", "KIND", "ROWS", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(rows):,} matches)")
+        print(f"\n({plural(len(rows), 'match', 'matches')})")
 
         if args.output:
             write_csv(args.output, ["schema", "name", "type", "row_count", "last_altered"], rows)

@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes, fmt_value
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes, fmt_value, plural
 
 
 def main():
@@ -64,7 +64,7 @@ def main():
             display_rows.append([col_name, type_display, nullable, default or "", comment or ""])
 
         print_table(["COLUMN", "TYPE", "NULLABLE", "DEFAULT", "COMMENT"], display_rows)
-        print(f"\n({len(columns):,} columns)")
+        print(f"\n({plural(len(columns), 'column')})")
 
         if args.output:
             write_csv(args.output, ["column", "type", "nullable", "default", "comment"], display_rows)

@@ -12,7 +12,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, resolve_schema
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, resolve_schema, plural
 
 
 def fetch_tables(conn, db, schema):
@@ -100,7 +100,7 @@ def main():
 
         print(f"Diff: {real_a} vs {real_b}\n")
         print_table(["DIFF", "OBJECT", "DETAIL"], display_rows)
-        print(f"\n({len(display_rows):,} differences; {len(common):,} tables/views compared in common)")
+        print(f"\n({plural(len(display_rows), 'difference')}; {plural(len(common), 'table/view', 'tables/views')} compared in common)")
 
         if args.output:
             write_csv(args.output, ["diff", "object", "detail"], display_rows)

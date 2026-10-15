@@ -21,7 +21,7 @@ values carry no time zone; they're assumed to be stored in UTC - use
 import argparse
 import statistics
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, DATE_TYPES
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, DATE_TYPES, plural
 
 DEFAULT_LAST = {"hour": 48, "day": 30, "week": 12, "month": 12}
 MAX_PERIODS = 1000
@@ -148,18 +148,18 @@ def main():
                 gaps.append((counts[start][0], counts[end][0], end - start + 1))
                 start = None
         low = sum(1 for _, n in counts[:-1] if n and median and n < LOW_SHARE * median)
-        notes = [f"({fmt_count(total)} rows in the window, median {fmt_count(median)} per {unit} that had rows)"]
+        notes = [f"({plural(total, 'row')} in the window, median {fmt_count(median)} per {unit} that had rows)"]
         if gaps:
             ranges = [fmt_period(a, unit) if k == 1 else f"{fmt_period(a, unit)} to {fmt_period(b, unit)} ({k:,} {unit}s)" for a, b, k in gaps]
             notes.append(f"No rows: {', '.join(ranges[:10])}" + (f" and {len(ranges) - 10:,} more gaps" if len(ranges) > 10 else ""))
         if low:
-            notes.append(f"{low:,} {unit}s below {100 * LOW_SHARE:.1f}% of the median.")
+            notes.append(f"{plural(low, unit)} below {100 * LOW_SHARE:.1f}% of the median.")
         if older:
-            notes.append(f"{fmt_count(older)} older rows not shown - raise --last to go further back.")
+            notes.append(f"{plural(older, 'older row')} not shown - raise --last to go further back.")
         if nulls:
-            notes.append(f"{fmt_count(nulls)} rows have no {col_name} (NULL) and aren't counted.")
+            notes.append(f"{plural(nulls, 'row has', 'rows have')} no {col_name} (NULL) and aren't counted.")
         if future:
-            notes.append(f"{fmt_count(future)} rows dated after now aren't counted (expiry/scheduled dates, or typo years).")
+            notes.append(f"{plural(future, 'row')} dated after now aren't counted (expiry/scheduled dates, or typo years).")
         if data_type == "TIMESTAMP_NTZ":
             notes.append(f"TIMESTAMP_NTZ values have no time zone; treated as {args.ntz_timezone} (change with --ntz-timezone).")
         print("\n" + "\n".join(notes))

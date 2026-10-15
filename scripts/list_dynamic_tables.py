@@ -13,7 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted, fmt_value
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted, fmt_value, plural
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
 
         headers = ["TABLE", "TARGET_LAG", "WAREHOUSE", "REFRESH_MODE", "STATE", "ROWS", "SIZE", "DATA_TIMESTAMP"]
         print_table(headers, display_rows)
-        print(f"\n({len(rows):,} dynamic tables)")
+        print(f"\n({plural(len(rows), 'dynamic table')})")
 
         if args.output:
             write_csv(args.output, [h.lower() for h in headers], display_rows)

@@ -22,7 +22,7 @@ or run_query.py.
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, quoted, quote_ident, info_schema, print_table, write_csv, run_cli, fmt_count, fmt_value, DATE_TYPES
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, quoted, quote_ident, info_schema, print_table, write_csv, run_cli, fmt_count, fmt_value, DATE_TYPES, plural
 
 
 
@@ -125,12 +125,12 @@ def main():
                 rows.append([col_name, data_type, fmt_value(newest), fmt_age(age), fmt_count(last_day), fmt_count(last_week)])
 
         print_table(["COLUMN", "TYPE", "NEWEST", "AGE", "ROWS_LAST_24H", "ROWS_LAST_7D"], rows)
-        notes = [f"({len(rows):,} date/timestamp columns, freshest first)"]
+        notes = [f"({plural(len(rows), 'date/timestamp column')}, freshest first)"]
         if any(r[1] == "TIMESTAMP_NTZ" for r in results):
             notes.append(f"TIMESTAMP_NTZ values have no time zone; treated as {args.ntz_timezone} (change with --ntz-timezone).")
         for r in results:
             if r[6]:
-                notes.append(f"{r[0]}: {r[6]:,} rows dated after now - left out above. Fine for expiry/scheduled dates; "
+                notes.append(f"{r[0]}: {plural(r[6], 'row')} dated after now - left out above. Fine for expiry/scheduled dates; "
                              f"otherwise likely typo years or placeholders.")
         print("\n" + "\n".join(notes))
 

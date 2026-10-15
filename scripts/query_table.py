@@ -17,7 +17,7 @@ Examples:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate, plural
 
 
 def main():
@@ -45,9 +45,9 @@ def main():
 
         print_table(cols, [[truncate(fmt_cell(v, is_json)) for v, is_json in zip(row, json_cols)] for row in rows])
         if more:
-            print(f"\n(showing first {len(rows):,} rows, more available - raise --limit to see more)")
+            print(f"\n(showing first {plural(len(rows), 'row')}, more available - raise --limit to see more)")
         else:
-            print(f"\n({len(rows):,} rows)")
+            print(f"\n({plural(len(rows), 'row')})")
 
         if args.output:
             write_csv(args.output, cols, rows)

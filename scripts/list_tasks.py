@@ -19,7 +19,7 @@ Usage:
 import argparse
 import json
 
-from sf_conn import get_connection, current_database, resolve_schema, quoted, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_value, truncate
+from sf_conn import get_connection, current_database, resolve_schema, quoted, quote_ident, positive_int, print_table, write_csv, run_cli, fmt_value, truncate, plural
 
 # INFORMATION_SCHEMA.TASK_HISTORY rejects a start time 7 full days back or earlier.
 MAX_HOURS = 167
@@ -131,7 +131,7 @@ def list_all(args, conn, db):
     print()
     headers = ["TASK", "STATE", "SCHEDULE", "WAREHOUSE", "LAST_RUN", "LAST_RESULT", "RUNS", "FAILED", "NEXT_RUN", "NOTE"]
     print_table(headers, display_rows)
-    print(f"\n({len(display_rows):,} tasks - use --runs SCHEMA.TASK to see a task's runs and errors)")
+    print(f"\n({plural(len(display_rows), 'task')} - use --runs SCHEMA.TASK to see a task's runs and errors)")
 
     if args.output:
         write_csv(args.output, [h.lower() for h in headers] + ["condition", "owner", "last_error", "definition"], csv_rows)
@@ -184,7 +184,7 @@ def list_runs(args, parser, conn, db):
         csv_rows.append([fmt_value(scheduled), state, fmt_value(started), fmt_value(completed), seconds, error or "", query_id or ""])
 
     print_table(["SCHEDULED", "STATE", "STARTED", "SECONDS", "ERROR"], display_rows)
-    print(f"\n({len(rows):,} most recent runs, {window} - use --output for full error messages and query IDs)")
+    print(f"\n({plural(len(rows), 'most recent run')}, {window} - use --output for full error messages and query IDs)")
 
     if args.output:
         write_csv(args.output, ["scheduled", "state", "started", "completed", "seconds", "error", "query_id"], csv_rows)

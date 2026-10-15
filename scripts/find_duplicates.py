@@ -21,7 +21,7 @@ To see the full rows behind a duplicated key, use run_query.py.
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_pct, fmt_cell, json_columns, truncate, UNGROUPABLE_TYPES
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_pct, fmt_cell, json_columns, truncate, UNGROUPABLE_TYPES, plural
 
 
 
@@ -75,7 +75,7 @@ def main():
             return
         total, distinct_keys, dup_keys, extra_rows = rows[0][-4:]
 
-        print(f"{label}  [{kind}]  -  {scope}{fmt_count(total)} rows, {fmt_count(distinct_keys)} distinct keys")
+        print(f"{label}  [{kind}]  -  {scope}{plural(total, 'row')}, {plural(distinct_keys, 'distinct key')}")
         print()
         if not dup_keys:
             print(f"Unique - every key appears exactly once{' in the sample' if args.sample else ''}.")
@@ -92,8 +92,8 @@ def main():
 
         print_table(key_cols + ["COUNT"], display_rows)
         shown = f"top {len(display_rows):,} of " if len(display_rows) < dup_keys else ""
-        print(f"\n(NOT unique - {shown}{fmt_count(dup_keys)} keys appear more than once "
-              f"({fmt_pct(dup_keys, distinct_keys)} of keys), adding {fmt_count(extra_rows)} extra rows "
+        print(f"\n(NOT unique - {shown}{plural(dup_keys, 'key appears', 'keys appear')} more than once "
+              f"({fmt_pct(dup_keys, distinct_keys)} of keys), adding {plural(extra_rows, 'extra row')} "
               f"({fmt_pct(extra_rows, total)} of rows))")
         if args.sample:
             print("Checked a random sample only - the whole table may have more duplicates.")

@@ -16,7 +16,7 @@ shell, e.g.  python top_values.py MYSCHEMA.MYTABLE "Billing Status"
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES, plural
 
 
 
@@ -70,10 +70,10 @@ def main():
             csv_rows.append(row)
             display_rows.append([truncate(shown)] + row[1:])
 
-        print(f"{real_schema}.{real_name}.{col_name}  [{data_type}]  -  {scope}{fmt_count(total)} rows")
+        print(f"{real_schema}.{real_name}.{col_name}  [{data_type}]  -  {scope}{plural(total, 'row')}")
         print()
         print_table(["VALUE", "COUNT", "%", "CUMULATIVE_%"], display_rows)
-        print(f"\n(top {len(rows):,} of {fmt_count(n_distinct)} distinct values, NULL counted as one - covers {fmt_pct(running, total)} of rows)")
+        print(f"\n(top {len(rows):,} of {plural(n_distinct, 'distinct value')}, NULL counted as one - covers {fmt_pct(running, total)} of rows)")
 
         if args.output:
             write_csv(args.output, ["value", "count", "pct", "cumulative_pct"], csv_rows)

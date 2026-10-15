@@ -10,7 +10,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value, plural
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
             ])
 
         print_table(["SCHEMA", "TABLES", "VIEWS", "SIZE", "CREATED", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(display_rows):,} schemas)")
+        print(f"\n({plural(len(display_rows), 'schema')})")
 
         if args.output:
             write_csv(args.output, ["schema", "tables", "views", "size_bytes", "created", "last_altered"], display_rows)

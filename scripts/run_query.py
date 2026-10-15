@@ -24,7 +24,7 @@ import argparse
 import io
 
 # sf_conn must be imported before anything from snowflake.connector - it applies an ssl compatibility fix first.
-from sf_conn import get_connection, positive_int, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate
+from sf_conn import get_connection, positive_int, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate, plural
 from snowflake.connector.util_text import split_statements
 
 ALLOWED_FIRST_WORDS = {"SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"}
@@ -84,11 +84,11 @@ def main():
         shown = rows[:args.limit]
         print_table(cols, [[truncate(fmt_cell(v, is_json)) for v, is_json in zip(row, json_cols)] for row in shown])
         if len(rows) > args.limit and args.output:
-            print(f"\n(showing first {len(shown):,} of {len(rows):,} rows - all of them go to the CSV)")
+            print(f"\n(showing first {len(shown):,} of {plural(len(rows), 'row')} - all of them go to the CSV)")
         elif len(rows) > args.limit:
-            print(f"\n(showing first {len(shown):,} rows, more available - raise --limit or use --output to get them all)")
+            print(f"\n(showing first {plural(len(shown), 'row')}, more available - raise --limit or use --output to get them all)")
         else:
-            print(f"\n({len(rows):,} rows)")
+            print(f"\n({plural(len(rows), 'row')})")
 
         if args.output:
             write_csv(args.output, cols, rows)

@@ -15,7 +15,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES, plural
 
 # UNGROUPABLE_TYPES columns get only a null count. JSON_TYPES columns get no
 # MIN/MAX (ARRAY/OBJECT fail outright; for VARIANT the result isn't
@@ -76,13 +76,13 @@ def main():
             csv_rows.append(row)
             display_rows.append(row[:5] + [truncate(min_v), truncate(max_v)])
 
-        scope = f"random sample of {fmt_count(total)} rows" if args.sample else f"{fmt_count(total)} rows"
+        scope = f"random sample of {plural(total, 'row')}" if args.sample else plural(total, "row")
         print(f"{real_schema}.{real_name}  [{kind}]  -  {scope}")
         print()
 
         distinct_header = "DISTINCT" if args.exact else "DISTINCT (~)"
         print_table(["COLUMN", "TYPE", "NULLS", "NULL_%", distinct_header, "MIN", "MAX"], display_rows)
-        print(f"\n({len(columns):,} columns)")
+        print(f"\n({plural(len(columns), 'column')})")
         if not args.exact:
             print("Distinct counts are approximate - use --exact for exact counts.")
 

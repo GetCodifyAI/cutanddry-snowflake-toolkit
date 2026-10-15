@@ -12,7 +12,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema, positive_int, fmt_value
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema, positive_int, fmt_value, plural
 
 
 def main():
@@ -60,7 +60,7 @@ def main():
             ])
 
         print_table(["TABLE", "KIND", "ROWS", "SIZE", "LAST_ALTERED"], display_rows)
-        print(f"\n({len(rows):,} tables/views, most recently altered first)")
+        print(f"\n({plural(len(rows), 'table/view', 'tables/views')}, most recently altered first)")
 
         if args.output:
             write_csv(args.output, ["table", "kind", "rows", "size_bytes", "last_altered"], display_rows)
