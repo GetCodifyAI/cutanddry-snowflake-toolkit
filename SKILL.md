@@ -152,7 +152,12 @@ the versions from this skill's `scripts/` folder into that project folder:
 - `list_dynamic_tables.py` — lists dynamic tables specifically (via
   `SHOW DYNAMIC TABLES`, distinct from `list_tables.py`'s plain
   tables/views), showing target lag, warehouse, refresh mode, scheduling
-  state, row count, and size, optionally filtered to one schema
+  state, row count, and size, optionally filtered to one schema.
+  `--refreshes SCHEMA.TABLE` shows one dynamic table's recent refreshes
+  instead (past ~7 days, `--limit` default 20): data timestamp, state,
+  FULL/INCREMENTAL, trigger, start, QUEUED_S (waiting for the warehouse)
+  vs RUN_S (actually running), rows inserted/deleted, and errors (full text
+  and query IDs in `--output`)
 - `diff_schema.py` — compares two schemas: tables/views present in only one
   of them, and for tables/views present in both, a switch between table and
   view (`KIND_CHANGED`) and columns that were added, removed, or changed
@@ -227,6 +232,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Looking specifically for dynamic tables (refresh schedule, target lag,
      warehouse, scheduling state) rather than plain tables/views →
      `list_dynamic_tables.py`
+   - "Is this dynamic table refreshing?", "why is it stale/slow?", "why did
+     its refresh fail?" → `list_dynamic_tables.py --refreshes SCHEMA.TABLE`
    - Comparing two schemas (e.g. a versioned pair like `DTAM_V2` vs
      `DTAM_V3`) to see what tables/columns differ → `diff_schema.py`
    - "What changed recently" across the database (or one schema) →
@@ -292,7 +299,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python find_usages.py SCHEMA.TABLE --dependencies` - it finds dependents
      in other databases and through chains of views
    - Dynamic tables only: `python list_dynamic_tables.py` or
-     `python list_dynamic_tables.py --schema SOME_SCHEMA`
+     `python list_dynamic_tables.py --schema SOME_SCHEMA`; one table's
+     refreshes: `python list_dynamic_tables.py --refreshes SCHEMA.TABLE`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either
      can be `DATABASE.SCHEMA` to compare across databases)
    - Recently changed tables: `python recent_tables.py` (add `--limit`/`-n`

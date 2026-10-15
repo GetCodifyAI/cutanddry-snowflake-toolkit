@@ -74,7 +74,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `daily_counts.py` | Rows per day (or hour/week/month) by a date/timestamp column, with a trend bar; flags periods with no rows and unusually low ones | `python daily_counts.py JIRA.ISSUES UPDATED` or `python daily_counts.py PUBLIC.ORDERS ORDER_DATE --by month --last 24` |
 | `find_usages.py` | Finds views, dynamic tables, tasks, functions and procedures whose SQL mentions a table/view/column name - "what breaks if I change this?" | `python find_usages.py CANONICALPRODUCT_ID`, or `python find_usages.py UPB.ORDERS_FLATTENED --dependencies` for everything in any database that depends on a table, directly or through other objects |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
-| `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
+| `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size; `--refreshes` shows one table's recent refreshes (queue vs run time, rows inserted/deleted, errors) | `python list_dynamic_tables.py --schema PUBLIC` or `python list_dynamic_tables.py --refreshes SUPPLIER_DASHBOARD.ACTIVE_CUSTOMERS_VIEW` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, ones that switched between table and view, and columns added/removed/changed (full type incl. length/precision, and nullability) on tables present in both; either schema can be `DATABASE.SCHEMA` | `python diff_schema.py DTAM_V2 DTAM_V3` or `python diff_schema.py CUT_AND_DRY_PROD_SCHEMA CUT_AND_DRY_UNIFIED.PRODUCTION` |
 | `list_schemas.py` | Lists every schema in the database with table/view counts, estimated size, created/last_altered | `python list_schemas.py` |
 | `recent_tables.py` | Lists tables/views sorted by last_altered, most recent first - "what changed recently" | `python recent_tables.py --limit 50` or `python recent_tables.py --schema PUBLIC` |
@@ -109,7 +109,8 @@ what really keeps it read-only.
   gets every one), and
   `query_history.py` (max queries to show, defaults to 20), and
   `run_query.py` (max rows to print, defaults to 50 - `--output` still
-  gets every row), and `list_tasks.py --runs` (max runs to show, defaults
+  gets every row), `list_dynamic_tables.py --refreshes` (max refreshes to
+  show, defaults to 20), and `list_tasks.py --runs` (max runs to show, defaults
   to 20). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
 - `--sample <N>` — `profile_table.py`, `top_values.py` and `find_duplicates.py`. Works on a
