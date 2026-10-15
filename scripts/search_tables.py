@@ -14,7 +14,7 @@ Example:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, like_contains
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_value, like_contains
 
 
 def main():
@@ -41,7 +41,7 @@ def main():
             return
 
         display_rows = [
-            [f"{schema}.{name}", kind_from_type(ttype), fmt_count(row_count), last_altered]
+            [f"{schema}.{name}", kind_from_type(ttype), fmt_count(row_count), fmt_value(last_altered)]
             for schema, name, ttype, row_count, last_altered in rows
         ]
 

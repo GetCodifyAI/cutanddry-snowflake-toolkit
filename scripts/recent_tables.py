@@ -12,7 +12,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema, positive_int
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema, positive_int, fmt_value
 
 
 def main():
@@ -56,7 +56,7 @@ def main():
                 kind_from_type(ttype),
                 fmt_count(row_count),
                 fmt_bytes(bytes_),
-                last_altered,
+                fmt_value(last_altered),
             ])
 
         print_table(["TABLE", "KIND", "ROWS", "SIZE", "LAST_ALTERED"], display_rows)

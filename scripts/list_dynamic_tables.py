@@ -13,7 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, fmt_count, fmt_bytes, resolve_schema, quoted, fmt_value
 
 
 def main():
@@ -60,7 +60,7 @@ def main():
                 col(row, "scheduling_state") or "",
                 fmt_count(col(row, "rows")),
                 fmt_bytes(col(row, "bytes")),
-                col(row, "data_timestamp") or "",
+                fmt_value(col(row, "data_timestamp")),
             ])
 
         headers = ["TABLE", "TARGET_LAG", "WAREHOUSE", "REFRESH_MODE", "STATE", "ROWS", "SIZE", "DATA_TIMESTAMP"]

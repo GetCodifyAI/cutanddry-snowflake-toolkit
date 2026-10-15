@@ -10,7 +10,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value
 
 
 def main():
@@ -54,8 +54,8 @@ def main():
                 fmt_count(s["TABLE"]),
                 fmt_count(s["VIEW"]),
                 fmt_bytes(s["bytes"]),
-                created,
-                s["last_altered"],
+                fmt_value(created),
+                fmt_value(s["last_altered"]),
             ])
 
         print_table(["SCHEMA", "TABLES", "VIEWS", "SIZE", "CREATED", "LAST_ALTERED"], display_rows)

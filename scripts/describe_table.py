@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_bytes, fmt_value
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
 
         print(f"{real_schema}.{real_name}  [{kind}]")
         print(f"  rows: {fmt_count(row_count)}   size: {fmt_bytes(bytes_)}")
-        print(f"  created: {created}   last_altered: {last_altered}")
+        print(f"  created: {fmt_value(created)}   last_altered: {fmt_value(last_altered)}")
         if table_comment:
             print(f"  comment: {table_comment}")
         print()

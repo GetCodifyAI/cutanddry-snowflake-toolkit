@@ -11,7 +11,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, resolve_schema
+from sf_conn import get_connection, current_database, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value, resolve_schema
 
 
 def main():
@@ -50,7 +50,7 @@ def main():
                 current_schema = schema
             print(
                 f"  - {name}  [{kind_from_type(ttype)}]  rows={fmt_count(row_count)}  "
-                f"size={fmt_bytes(bytes_)}  last_altered={last_altered}"
+                f"size={fmt_bytes(bytes_)}  last_altered={fmt_value(last_altered)}"
             )
 
         if args.output:
