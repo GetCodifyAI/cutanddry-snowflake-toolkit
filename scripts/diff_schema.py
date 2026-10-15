@@ -1,5 +1,5 @@
 """
-Read-only: compares two schemas in the configured database and reports
+Read-only: compares two schemas and reports
 what's different - tables/views present in only one of them, and for
 tables/views present in both, any that switched between table and view,
 and any columns that were added, removed, or changed type/nullability.
@@ -7,14 +7,18 @@ Types are compared in full, so NUMBER(38,0) -> NUMBER(10,2) or
 VARCHAR(16) -> VARCHAR(256) counts as a change. Handy for environments
 with versioned schema copies (e.g. DTAM / DTAM_V2 / DTAM_V3).
 
+Either schema can be DATABASE.SCHEMA to compare across databases;
+otherwise SNOWFLAKE_DATABASE from .env is used.
+
 Usage:
   python diff_schema.py SCHEMA_A SCHEMA_B
+  python diff_schema.py SCHEMA_A OTHER_DB.SCHEMA_B
   python diff_schema.py SCHEMA_A SCHEMA_B --output diff.csv
 """
 
 import argparse
 
-from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, resolve_schema, plural, fmt_type, kind_from_type
+from sf_conn import get_connection, resolve_target, print_table, write_csv, run_cli, info_schema, plural, fmt_type, kind_from_type
 
 
 def fetch_tables(conn, db, schema):
@@ -47,27 +51,31 @@ def fetch_columns(conn, db, schema):
 
 def main():
     parser = argparse.ArgumentParser(description="Compare two schemas' tables/views and columns.")
-    parser.add_argument("schema_a", help="First schema to compare.")
-    parser.add_argument("schema_b", help="Second schema to compare.")
+    parser.add_argument("schema_a", help="First schema (SCHEMA or DATABASE.SCHEMA).")
+    parser.add_argument("schema_b", help="Second schema (SCHEMA or DATABASE.SCHEMA).")
     parser.add_argument("--output", "-o", help="Also write the full diff to this CSV file.")
     args = parser.parse_args()
 
-    db = current_database()
-
     conn = get_connection()
     try:
-        real_a = resolve_schema(conn, db, args.schema_a)
-        real_b = resolve_schema(conn, db, args.schema_b)
+        db_a, schema_a = resolve_target(conn, args.schema_a)
+        db_b, schema_b = resolve_target(conn, args.schema_b)
+        if (db_a, schema_a) == (db_b, schema_b):
+            parser.error("both arguments are the same schema")
+        # Names in the output: just the schema, or DATABASE.SCHEMA when comparing across databases.
+        cross_db = db_a != db_b
+        real_a = f"{db_a}.{schema_a}" if cross_db else schema_a
+        real_b = f"{db_b}.{schema_b}" if cross_db else schema_b
 
-        tables_a = fetch_tables(conn, db, real_a)
-        tables_b = fetch_tables(conn, db, real_b)
+        tables_a = fetch_tables(conn, db_a, schema_a)
+        tables_b = fetch_tables(conn, db_b, schema_b)
 
         only_in_a = sorted(set(tables_a) - set(tables_b))
         only_in_b = sorted(set(tables_b) - set(tables_a))
         common = sorted(set(tables_a) & set(tables_b))
 
-        cols_a = fetch_columns(conn, db, real_a)
-        cols_b = fetch_columns(conn, db, real_b)
+        cols_a = fetch_columns(conn, db_a, schema_a)
+        cols_b = fetch_columns(conn, db_b, schema_b)
 
         display_rows = []
 

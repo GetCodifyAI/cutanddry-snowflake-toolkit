@@ -107,6 +107,32 @@ def resolve_schema(conn, db, schema):
     return rows[0][0]
 
 
+def resolve_database(conn, name):
+    """Look up a database by name, tolerant of case. Returns the exact stored name."""
+    cs = conn.cursor()
+    cs.execute(
+        f'select database_name from {info_schema(current_database(), "databases")} where upper(database_name) = upper(%s)',
+        (name,),
+    )
+    rows = cs.fetchall()
+    if not rows:
+        raise SystemExit(f"No database matching '{name}' found (or your role can't see it).")
+    exact = [r[0] for r in rows if r[0] == name]
+    if len(rows) > 1 and len(exact) != 1:
+        raise SystemExit(f"Multiple databases matching '{name}': {', '.join(r[0] for r in rows)}. Type the exact case to pick one.")
+    return exact[0] if len(exact) == 1 else rows[0][0]
+
+
+def resolve_target(conn, value):
+    """Turn 'SCHEMA' or 'DATABASE.SCHEMA' into (real_db, real_schema)."""
+    if "." in value:
+        db_name, schema_name = value.split(".", 1)
+        db = resolve_database(conn, db_name)
+    else:
+        db, schema_name = current_database(), value
+    return db, resolve_schema(conn, db, schema_name)
+
+
 def resolve_column(conn, db, schema, table, column):
     """
     Look up a column of an already-resolved table/view by name, tolerant of

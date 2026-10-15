@@ -131,7 +131,8 @@ the versions from this skill's `scripts/` folder into that project folder:
   view (`KIND_CHANGED`) and columns that were added, removed, or changed
   type/nullability. Types are compared in full, so `NUMBER(38,0)` ->
   `NUMBER(10,2)` or `VARCHAR(16)` -> `VARCHAR(256)` shows as a change -
-  useful for versioned schema copies (e.g. `DTAM_V2` vs `DTAM_V3`)
+  useful for versioned schema copies (e.g. `DTAM_V2` vs `DTAM_V3`). Either
+  schema can be `DATABASE.SCHEMA` to compare across databases
 - `list_schemas.py` — lists every schema in the database with table/view
   counts, estimated size, and created/last_altered timestamps - a quick
   overview before drilling into one schema
@@ -182,7 +183,7 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      (then `--runs SCHEMA.TASK` for one task's errors)
    - "Does this copy/migration have the same data?", comparing row counts
      between two schemas or databases → `compare_counts.py` (pair with
-     `diff_schema.py` for structural differences within one database)
+     `diff_schema.py` for structural differences)
    - "Who can see/edit this table?", "does role X have access?", "which
      users can read this?" → `show_grants.py` (add `--users` for people,
      `--privilege SELECT` for read access only)
@@ -253,7 +254,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
-   - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B`
+   - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either
+     can be `DATABASE.SCHEMA` to compare across databases)
    - Recently changed tables: `python recent_tables.py` (add `--limit`/`-n`
      for more/fewer than the default 20, or `--schema` to scope to one
      schema)
