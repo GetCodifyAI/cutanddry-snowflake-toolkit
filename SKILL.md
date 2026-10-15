@@ -157,7 +157,10 @@ the versions from this skill's `scripts/` folder into that project folder:
   instead (past ~7 days, `--limit` default 20): data timestamp, state,
   FULL/INCREMENTAL, trigger, start, QUEUED_S (waiting for the warehouse)
   vs RUN_S (actually running), rows inserted/deleted, and errors (full text
-  and query IDs in `--output`)
+  and query IDs in `--output`). `--failing` lists only dynamic tables with a
+  failed refresh in the past 7 days, adding failure count, last failure time
+  and last error (Snowflake doesn't record why a dynamic table was
+  suspended, so suspended ones without failures aren't included)
 - `diff_schema.py` — compares two schemas: tables/views present in only one
   of them, and for tables/views present in both, a switch between table and
   view (`KIND_CHANGED`) and columns that were added, removed, or changed
@@ -233,7 +236,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      warehouse, scheduling state) rather than plain tables/views →
      `list_dynamic_tables.py`
    - "Is this dynamic table refreshing?", "why is it stale/slow?", "why did
-     its refresh fail?" → `list_dynamic_tables.py --refreshes SCHEMA.TABLE`
+     its refresh fail?" → `list_dynamic_tables.py --refreshes SCHEMA.TABLE`;
+     "which dynamic tables are failing?" → `list_dynamic_tables.py --failing`
    - Comparing two schemas (e.g. a versioned pair like `DTAM_V2` vs
      `DTAM_V3`) to see what tables/columns differ → `diff_schema.py`
    - "What changed recently" across the database (or one schema) →
