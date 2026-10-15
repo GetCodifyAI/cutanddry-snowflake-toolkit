@@ -40,7 +40,9 @@ the versions from this skill's `scripts/` folder into that project folder:
   last_altered) in whatever database is set in `.env`, optionally filtered to
   one schema
 - `query_table.py` — runs `select * from <table> limit <N>` and prints the
-  result
+  result (numbers with commas, MM/DD/YY dates, JSON compacted to one line,
+  long values cut short; says when more rows are available). `--output`
+  keeps values whole
 - `describe_table.py` — shows a table/view's full column definitions (name,
   type, nullable, default, comment) plus metadata (row count, size, created,
   last_altered, comment)

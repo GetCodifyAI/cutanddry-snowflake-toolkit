@@ -2,6 +2,8 @@
 Read-only: runs `select * from <table> limit <N>` and prints the result.
 Automatically resolves the correct case of the schema/table name, so you
 don't need to worry about quoting lowercase schemas like "airbyte_internal".
+Numbers get commas, dates show as MM/DD/YY, JSON is compacted to one line
+and long values are cut short on screen - the CSV keeps every value whole.
 
 Usage:
   python query_table.py SCHEMA.TABLE_NAME
@@ -15,7 +17,7 @@ Examples:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, print_table, write_csv, run_cli
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate
 
 
 def main():
@@ -33,12 +35,19 @@ def main():
         cs = conn.cursor()
         real_schema, real_name, _ = resolve_object(conn, schema, name, db)
 
-        cs.execute(f"select * from {quoted(db, real_schema, real_name)} limit %s", (args.limit,))
+        # One row past the limit, just to tell whether there's more.
+        cs.execute(f"select * from {quoted(db, real_schema, real_name)} limit %s", (args.limit + 1,))
         cols = [d[0] for d in cs.description]
+        json_cols = json_columns(cs.description)
         rows = cs.fetchall()
+        more = len(rows) > args.limit
+        rows = rows[:args.limit]
 
-        print_table(cols, rows)
-        print(f"\n({len(rows):,} rows)")
+        print_table(cols, [[truncate(fmt_cell(v, is_json)) for v, is_json in zip(row, json_cols)] for row in rows])
+        if more:
+            print(f"\n(showing first {len(rows):,} rows, more available - raise --limit to see more)")
+        else:
+            print(f"\n({len(rows):,} rows)")
 
         if args.output:
             write_csv(args.output, cols, rows)

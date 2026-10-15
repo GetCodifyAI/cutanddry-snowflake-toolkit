@@ -22,25 +22,12 @@ SNOWFLAKE_SCHEMA if set) from .env.
 
 import argparse
 import io
-import json
 
 # sf_conn must be imported before anything from snowflake.connector - it applies an ssl compatibility fix first.
-from sf_conn import get_connection, positive_int, print_table, write_csv, run_cli, fmt_value, truncate
-from snowflake.connector.constants import FIELD_ID_TO_NAME
+from sf_conn import get_connection, positive_int, print_table, write_csv, run_cli, fmt_cell, json_columns, truncate
 from snowflake.connector.util_text import split_statements
 
 ALLOWED_FIRST_WORDS = {"SELECT", "WITH", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"}
-# Semi-structured values arrive as pretty-printed JSON; shown compacted to one line.
-JSON_TYPES = {"VARIANT", "OBJECT", "ARRAY"}
-
-
-def fmt_cell(v, is_json):
-    if is_json and isinstance(v, str):
-        try:
-            return json.dumps(json.loads(v), separators=(",", ":"))
-        except ValueError:
-            pass
-    return fmt_value(v)
 
 
 def check_read_only(parser, sql):
@@ -88,7 +75,7 @@ def main():
         try:
             cs.execute(stmt)
             cols = [d[0] for d in cs.description]
-            json_cols = [FIELD_ID_TO_NAME[d[1]] in JSON_TYPES for d in cs.description]
+            json_cols = json_columns(cs.description)
             # Without --output, only fetch what will be printed (plus one row to tell whether there's more).
             rows = cs.fetchall() if args.output else cs.fetchmany(args.limit + 1)
         finally:

@@ -10,6 +10,7 @@ import argparse
 import csv
 import datetime
 import decimal
+import json
 import os
 import ssl
 import sys
@@ -22,6 +23,7 @@ if not hasattr(ssl, "PROTOCOL_TLSv1_1"):
 from dotenv import load_dotenv
 import snowflake.connector
 import snowflake.connector.errors as sf_errors
+from snowflake.connector.constants import FIELD_ID_TO_NAME
 
 load_dotenv()
 
@@ -211,6 +213,25 @@ def fmt_value(v):
     if v == "":
         return "(empty string)"  # otherwise indistinguishable from NULL
     return str(v).replace("\n", " ").replace("\r", " ")
+
+
+# Semi-structured values arrive as pretty-printed JSON; shown compacted to one line.
+JSON_TYPES = {"VARIANT", "OBJECT", "ARRAY"}
+
+
+def json_columns(description):
+    """For each column in a cursor's description, whether it holds VARIANT/OBJECT/ARRAY values."""
+    return [FIELD_ID_TO_NAME[d[1]] in JSON_TYPES for d in description]
+
+
+def fmt_cell(v, is_json):
+    """fmt_value(), except semi-structured values are compacted to one line of JSON."""
+    if is_json and isinstance(v, str):
+        try:
+            return json.dumps(json.loads(v), separators=(",", ":"))
+        except ValueError:
+            pass
+    return fmt_value(v)
 
 
 def truncate(s):
