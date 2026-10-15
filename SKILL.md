@@ -116,6 +116,16 @@ the versions from this skill's `scripts/` folder into that project folder:
   cut in UTC unless `--timezone` is given; TIMESTAMP_NTZ is assumed stored
   in UTC (`--ntz-timezone`). If the whole window is empty it says when the
   newest row is. Complements `freshness.py`, which only gives the newest value
+- `find_usages.py` — finds every view, materialized view, dynamic table,
+  task, function and procedure in the database whose SQL mentions a name
+  (table, view or column), with the match count and a snippet of the first
+  match. Whole-word, case-insensitive match that ignores identifier quotes;
+  `--partial` matches inside longer names. A `SCHEMA.NAME` only matches
+  where written qualified - search the bare name too. `--schema` limits
+  where it looks, `--database` searches another database. Uses SHOW output,
+  so views/dynamic tables/tasks are always searchable; functions and
+  procedures only where the role can see their code (the count it couldn't
+  see is reported)
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -194,6 +204,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - "When did loads stop?", "did volume drop?", "how many rows per
      day/month?", "are there gaps in the data?" → `daily_counts.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
+   - "What uses this table/column?", "what breaks if I drop/rename/retype
+     this?", "which views read from X?" → `find_usages.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
    - Looking specifically for dynamic tables (refresh schedule, target lag,
@@ -254,6 +266,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `--timezone America/Los_Angeles` to cut days at local midnight). If it
      says the window is empty, rerun with a larger `--last` or `--by month`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
+   - What references a name: `python find_usages.py NAME` (e.g.
+     `python find_usages.py CANONICALPRODUCT_ID`; add `--partial` to match
+     inside longer names, `--schema`/`--database` to change where it looks)
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either

@@ -71,6 +71,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `show_grants.py` | Who has access to a table/view: roles and their privileges; `--users` lists the actual users and through which roles | `python show_grants.py PUBLIC.ORDERS` or `python show_grants.py PUBLIC.ORDERS --privilege SELECT --users` |
 | `freshness.py` | When data last arrived: newest value, age and rows in the last 24h/7d for each date/timestamp column, plus last write time | `python freshness.py JIRA.ISSUES` or `python freshness.py JIRA.ISSUES UPDATED` |
 | `daily_counts.py` | Rows per day (or hour/week/month) by a date/timestamp column, with a trend bar; flags periods with no rows and unusually low ones | `python daily_counts.py JIRA.ISSUES UPDATED` or `python daily_counts.py PUBLIC.ORDERS ORDER_DATE --by month --last 24` |
+| `find_usages.py` | Finds views, dynamic tables, tasks, functions and procedures whose SQL mentions a table/view/column name - "what breaks if I change this?" | `python find_usages.py CANONICALPRODUCT_ID` or `python find_usages.py JIRA.ISSUES --schema REPORTS` |
 | `get_ddl.py` | Prints the full `CREATE TABLE`/`CREATE VIEW` statement | `python get_ddl.py PUBLIC.ORDERS` |
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size | `python list_dynamic_tables.py` or `python list_dynamic_tables.py --schema PUBLIC` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, ones that switched between table and view, and columns added/removed/changed (full type incl. length/precision, and nullability) on tables present in both; either schema can be `DATABASE.SCHEMA` | `python diff_schema.py DTAM_V2 DTAM_V3` or `python diff_schema.py CUT_AND_DRY_PROD_SCHEMA CUT_AND_DRY_UNIFIED.PRODUCTION` |
@@ -96,7 +97,7 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
@@ -140,8 +141,8 @@ what really keeps it read-only.
   to 48 hours / 30 days / 12 weeks / 12 months, max 1,000) and
   `--timezone <TZ>` (the zone periods are counted in, default UTC).
 - `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`,
-  `recent_tables.py`, `search_tables.py` and `search_columns.py`. Scopes the
-  listing or search to one schema (case-insensitive).
+  `recent_tables.py`, `search_tables.py`, `search_columns.py` and `find_usages.py`.
+  Scopes the listing or search to one schema (case-insensitive).
 
 Terminal output is printed the same way whether or not `--output` is used:
 an aligned, column-width-aware table.
