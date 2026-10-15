@@ -125,7 +125,12 @@ the versions from this skill's `scripts/` folder into that project folder:
   where it looks, `--database` searches another database. Uses SHOW output,
   so views/dynamic tables/tasks are always searchable; functions and
   procedures only where the role can see their code (the count it couldn't
-  see is reported)
+  see is reported). `--dependencies` (with `SCHEMA.TABLE_OR_VIEW`) instead
+  lists objects in ANY database that depend on it, directly or through
+  other views/dynamic tables (LEVEL, THROUGH), from
+  `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES` - catches cross-database
+  dependents and functions whose code is hidden, but lags up to 3 hours and
+  is object-level only (use the text search for columns)
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -268,7 +273,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - What references a name: `python find_usages.py NAME` (e.g.
      `python find_usages.py CANONICALPRODUCT_ID`; add `--partial` to match
-     inside longer names, `--schema`/`--database` to change where it looks)
+     inside longer names, `--schema`/`--database` to change where it looks).
+     Before dropping/renaming a table, also run
+     `python find_usages.py SCHEMA.TABLE --dependencies` - it finds dependents
+     in other databases and through chains of views
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either
