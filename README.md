@@ -68,6 +68,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
 | `list_tasks.py` | Lists tasks with state, schedule, warehouse, last run/result, failures over the past 7 days and next run; `--runs` shows one task's runs with errors | `python list_tasks.py --failing` or `python list_tasks.py --runs DTAM.MY_TASK` |
 | `compare_counts.py` | Compares row counts of same-named tables/views in two schemas (either can be `DATABASE.SCHEMA`), with difference and % | `python compare_counts.py CUT_AND_DRY_PROD_SCHEMA CUT_AND_DRY_UNIFIED.PRODUCTION --diff-only` |
+| `diff_rows.py` | Compares two tables' rows matched on a key (either can be `DATABASE.SCHEMA.TABLE`): rows only in A, only in B, and rows whose values differ, with which columns differ most | `python diff_rows.py CUT_AND_DRY_PRODUCTION_DATABASE.GRAPHP.VERIFIEDVENDOR CUT_AND_DRY_UNIFIED.PRODUCTION.VERIFIEDVENDOR --key ID` |
 | `show_grants.py` | Who has access to a table/view: roles and their privileges; `--users` lists the actual users and through which roles | `python show_grants.py PUBLIC.ORDERS` or `python show_grants.py PUBLIC.ORDERS --privilege SELECT --users` |
 | `freshness.py` | When data last arrived: newest value, age and rows in the last 24h/7d for each date/timestamp column, plus last write time | `python freshness.py JIRA.ISSUES` or `python freshness.py JIRA.ISSUES UPDATED` |
 | `daily_counts.py` | Rows per day (or hour/week/month) by a date/timestamp column, with a trend bar; flags periods with no rows and unusually low ones | `python daily_counts.py JIRA.ISSUES UPDATED` or `python daily_counts.py PUBLIC.ORDERS ORDER_DATE --by month --last 24` |
@@ -97,13 +98,15 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
   to 10), `recent_tables.py` (max rows to show, defaults to 20),
   `top_values.py` (how many top values to show, defaults to 20),
-  `find_duplicates.py` (how many duplicated keys to show, defaults to 20), and
+  `find_duplicates.py` (how many duplicated keys to show, defaults to 20),
+  `diff_rows.py` (how many differing rows to list, defaults to 20 - `--output`
+  gets every one), and
   `query_history.py` (max queries to show, defaults to 20), and
   `run_query.py` (max rows to print, defaults to 50 - `--output` still
   gets every row), and `list_tasks.py --runs` (max runs to show, defaults

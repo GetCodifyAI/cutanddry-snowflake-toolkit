@@ -133,6 +133,22 @@ def resolve_target(conn, value):
     return db, resolve_schema(conn, db, schema_name)
 
 
+def resolve_table_target(conn, parser, value):
+    """
+    Turn 'SCHEMA.TABLE' or 'DATABASE.SCHEMA.TABLE' into (real_db, real_schema,
+    real_name, kind), tolerant of case; exits via parser.error() if unqualified.
+    """
+    parts = value.split(".")
+    if len(parts) == 3:
+        db = resolve_database(conn, parts[0])
+        schema, name = parts[1], parts[2]
+    elif len(parts) == 2:
+        db, (schema, name) = current_database(), parts
+    else:
+        parser.error(f"{value}: expected SCHEMA.TABLE or DATABASE.SCHEMA.TABLE")
+    return (db, *resolve_object(conn, schema, name, db))
+
+
 def resolve_column(conn, db, schema, table, column):
     """
     Look up a column of an already-resolved table/view by name, tolerant of

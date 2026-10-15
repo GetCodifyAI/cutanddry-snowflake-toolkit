@@ -131,6 +131,16 @@ the versions from this skill's `scripts/` folder into that project folder:
   `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES` - catches cross-database
   dependents and functions whose code is hidden, but lags up to 3 hours and
   is object-level only (use the text search for columns)
+- `diff_rows.py` — compares two tables/views row by row, matched on
+  `--key` (one or more columns; `A_COL:B_COL` when named differently).
+  Either can be `DATABASE.SCHEMA.TABLE`. Prints row totals, rows in both
+  (identical vs different), rows only in A / only in B, a per-column count
+  of differences (most-different first), then the differing rows with
+  status and which columns differ (`--limit`, default 20; `--output` CSV
+  gets all, with raw keys). Same-named columns are compared; columns only
+  on one side are listed. Columns (and keys) whose types differ are compared
+  as text. Refuses to run if the key isn't unique on either side. Slow on
+  very wide tables (~1.5 minutes for 742 columns)
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -200,7 +210,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      (then `--runs SCHEMA.TASK` for one task's errors)
    - "Does this copy/migration have the same data?", comparing row counts
      between two schemas or databases → `compare_counts.py` (pair with
-     `diff_schema.py` for structural differences)
+     `diff_schema.py` for structural differences, then `diff_rows.py` on a
+     table whose counts differ to see exactly which rows/columns)
    - "Who can see/edit this table?", "does role X have access?", "which
      users can read this?" → `show_grants.py` (add `--users` for people,
      `--privilege SELECT` for read access only)
@@ -271,6 +282,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `--timezone America/Los_Angeles` to cut days at local midnight). If it
      says the window is empty, rerun with a larger `--last` or `--by month`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
+   - Row-level diff: `python diff_rows.py SCHEMA.TABLE_A OTHER_DB.SCHEMA.TABLE_B --key ID`
+     (several key columns for a composite key; `--key NODE_ID:ID` if the
+     key's name differs in B; check uniqueness first with `find_duplicates.py`)
    - What references a name: `python find_usages.py NAME` (e.g.
      `python find_usages.py CANONICALPRODUCT_ID`; add `--partial` to match
      inside longer names, `--schema`/`--database` to change where it looks).
