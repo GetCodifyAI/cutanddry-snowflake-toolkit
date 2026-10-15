@@ -56,7 +56,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | Script | What it does | Example |
 |---|---|---|
 | `test_connection.py` | Sanity-checks your `.env` and credentials | `python test_connection.py` |
-| `list_tables.py` | Lists every table + view in the configured database, grouped by schema, with kind/row count/size/last_altered | `python list_tables.py` or `python list_tables.py --schema PUBLIC` |
+| `list_tables.py` | Lists every table + view in the configured database, sorted by schema, with kind/row count/size/created/last_altered | `python list_tables.py` or `python list_tables.py --schema PUBLIC` |
 | `search_tables.py` | Finds tables/views by partial name match across every schema | `python search_tables.py monday` |
 | `search_columns.py` | Finds every table/view that has a column matching a partial name | `python search_columns.py email` |
 | `query_table.py` | Samples rows from a table/view, with readable formatting (commas, MM/DD/YY dates, one-line JSON) and a note when more rows exist | `python query_table.py PUBLIC.ORDERS --limit 25` |
@@ -144,8 +144,7 @@ what really keeps it read-only.
   listing or search to one schema (case-insensitive).
 
 Terminal output is printed the same way whether or not `--output` is used:
-an aligned, column-width-aware table (or, for `list_tables.py`, a list
-grouped by schema).
+an aligned, column-width-aware table.
 
 ## Using this with Claude
 

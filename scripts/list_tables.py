@@ -1,7 +1,9 @@
 """
 Read-only: lists every table AND view in the database set as
-SNOWFLAKE_DATABASE in .env, using INFORMATION_SCHEMA (so case-sensitive
-schema/table names, e.g. from Airbyte, just work without any quoting).
+SNOWFLAKE_DATABASE in .env, sorted by schema then name, with kind, row
+count, size, and created/last altered dates. Uses INFORMATION_SCHEMA (so
+case-sensitive schema/table names, e.g. from Airbyte, just work without
+any quoting).
 
 Usage:
   python list_tables.py                        # everything in the database
@@ -11,7 +13,7 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value, resolve_schema
+from sf_conn import get_connection, current_database, print_table, write_csv, run_cli, info_schema, kind_from_type, fmt_count, fmt_bytes, fmt_value, resolve_schema, plural
 
 
 def main():
@@ -43,18 +45,15 @@ def main():
             print(f"No tables or views found in {scope}.")
             return
 
-        current_schema = None
-        for schema, name, ttype, row_count, bytes_, created, last_altered in rows:
-            if schema != current_schema:
-                print(f"\n[{schema}]")
-                current_schema = schema
-            print(
-                f"  - {name}  [{kind_from_type(ttype)}]  rows={fmt_count(row_count)}  "
-                f"size={fmt_bytes(bytes_)}  last_altered={fmt_value(last_altered)}"
-            )
+        display_rows = [
+            [f"{schema}.{name}", kind_from_type(ttype), fmt_count(row_count), fmt_bytes(bytes_), fmt_value(created), fmt_value(last_altered)]
+            for schema, name, ttype, row_count, bytes_, created, last_altered in rows
+        ]
+        print_table(["TABLE", "KIND", "ROWS", "SIZE", "CREATED", "LAST_ALTERED"], display_rows)
+        n_schemas = len({r[0] for r in rows})
+        print(f"\n({plural(len(rows), 'table/view', 'tables/views')} in {plural(n_schemas, 'schema')})")
 
         if args.output:
-            print()
             write_csv(args.output, ["schema", "name", "type", "row_count", "bytes", "created", "last_altered"], rows)
 
     finally:

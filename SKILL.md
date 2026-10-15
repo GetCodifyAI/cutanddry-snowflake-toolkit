@@ -37,7 +37,7 @@ the versions from this skill's `scripts/` folder into that project folder:
   about quoting lowercase/mixed-case identifiers (e.g. Airbyte's
   `airbyte_internal` schema).
 - `list_tables.py` — lists every table AND view (with kind, row count, size,
-  last_altered) in whatever database is set in `.env`, optionally filtered to
+  created, last_altered) as an aligned table in whatever database is set in `.env`, optionally filtered to
   one schema
 - `query_table.py` — runs `select * from <table> limit <N>` and prints the
   result (numbers with commas, MM/DD/YY dates, JSON compacted to one line,
