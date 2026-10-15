@@ -1,2 +1,5 @@
-snowflake-connector-python
-python-dotenv
+# Versions the scripts are tested against. ~= allows patch releases only:
+# sf_conn.py's ssl workaround depends on connector internals, so check a
+# new minor version with test_connection.py before raising these.
+snowflake-connector-python~=4.8.0
+python-dotenv~=1.2.4
