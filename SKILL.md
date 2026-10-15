@@ -107,6 +107,15 @@ the versions from this skill's `scripts/` folder into that project folder:
   (`--ntz-timezone` to change). Text columns holding dates aren't
   detected. Different from `recent_tables.py`, which only uses
   `last_altered` metadata
+- `daily_counts.py` — rows per day (or `--by hour|week|month`) by one
+  DATE/TIMESTAMP column over the last N periods (`--last`, default 30 days),
+  oldest first with a trend bar. Every period in the window is listed, so
+  gaps show as 0; consecutive empty periods are summarised as ranges, and
+  periods under 50% of the median (of periods that had rows) are flagged
+  "low". The current period is marked "so far" and not judged. Periods are
+  cut in UTC unless `--timezone` is given; TIMESTAMP_NTZ is assumed stored
+  in UTC (`--ntz-timezone`). If the whole window is empty it says when the
+  newest row is. Complements `freshness.py`, which only gives the newest value
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -177,6 +186,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `--privilege SELECT` for read access only)
    - "Is this table's data stale?", "when did data last land?", "is the
      Airbyte sync still bringing in rows?" → `freshness.py`
+   - "When did loads stop?", "did volume drop?", "how many rows per
+     day/month?", "are there gaps in the data?" → `daily_counts.py`
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
      have a customer_id column") → `search_columns.py`
@@ -233,6 +244,10 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      `python show_grants.py SCHEMA.TABLE_NAME --privilege SELECT --users`
    - Data freshness: `python freshness.py SCHEMA.TABLE_NAME` (or add a
      column name to check just that one)
+   - Rows per period: `python daily_counts.py SCHEMA.TABLE_NAME DATE_COLUMN`
+     (add `--last 90`, `--by hour|week|month`, or
+     `--timezone America/Los_Angeles` to cut days at local midnight). If it
+     says the window is empty, rerun with a larger `--last` or `--by month`
    - Full DDL: `python get_ddl.py SCHEMA.TABLE_NAME`
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`
