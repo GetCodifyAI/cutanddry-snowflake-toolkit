@@ -22,9 +22,8 @@ or run_query.py.
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, quoted, quote_ident, info_schema, print_table, write_csv, run_cli, fmt_count, fmt_value
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, quoted, quote_ident, info_schema, print_table, write_csv, run_cli, fmt_count, fmt_value, DATE_TYPES
 
-DATE_TYPES = {"DATE", "TIMESTAMP_NTZ", "TIMESTAMP_LTZ", "TIMESTAMP_TZ"}
 
 
 def fmt_age(seconds):
@@ -76,7 +75,7 @@ def main():
         else:
             cs.execute(
                 f'select column_name, data_type from {info_schema(db, "columns")} '
-                'where table_schema = %s and table_name = %s and data_type in (%s, %s, %s, %s) order by ordinal_position',
+                f'where table_schema = %s and table_name = %s and data_type in ({", ".join(["%s"] * len(DATE_TYPES))}) order by ordinal_position',
                 (real_schema, real_name, *sorted(DATE_TYPES)),
             )
             columns = cs.fetchall()

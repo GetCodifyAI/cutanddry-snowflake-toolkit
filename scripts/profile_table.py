@@ -15,13 +15,11 @@ Usage:
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_value, fmt_pct, truncate
+from sf_conn import get_connection, current_database, resolve_object, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, info_schema, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES
 
-# Types Snowflake can't take MIN/MAX on (ARRAY/OBJECT fail outright; for
-# VARIANT the result isn't meaningful) - distinct is still counted for these.
-NO_MIN_MAX_TYPES = {"VARIANT", "OBJECT", "ARRAY"}
-# Types where only the null count is profiled.
-NO_STATS_TYPES = {"MAP", "GEOGRAPHY", "GEOMETRY", "VECTOR"}
+# UNGROUPABLE_TYPES columns get only a null count. JSON_TYPES columns get no
+# MIN/MAX (ARRAY/OBJECT fail outright; for VARIANT the result isn't
+# meaningful), but distinct values are still counted.
 
 def main():
     parser = argparse.ArgumentParser(description="Profile every column of a table or view: nulls, distinct values, min/max.")
@@ -53,9 +51,9 @@ def main():
         for col_name, data_type in columns:
             col = quote_ident(col_name)
             select_parts.append(f"count({col})")
-            if data_type not in NO_STATS_TYPES:
+            if data_type not in UNGROUPABLE_TYPES:
                 select_parts.append(distinct_fn.format(col))
-            if data_type not in NO_STATS_TYPES | NO_MIN_MAX_TYPES:
+            if data_type not in UNGROUPABLE_TYPES | JSON_TYPES:
                 select_parts += [f"min({col})", f"max({col})"]
 
         source = quoted(db, real_schema, real_name)
@@ -69,10 +67,10 @@ def main():
         for col_name, data_type in columns:
             nulls = total - result.pop(0)
             distinct, min_v, max_v = "n/a", "n/a", "n/a"
-            if data_type not in NO_STATS_TYPES:
+            if data_type not in UNGROUPABLE_TYPES:
                 # The approximate count can overshoot slightly; it can never really exceed the non-null count.
                 distinct = fmt_count(min(result.pop(0), total - nulls))
-            if data_type not in NO_STATS_TYPES | NO_MIN_MAX_TYPES:
+            if data_type not in UNGROUPABLE_TYPES | JSON_TYPES:
                 min_v, max_v = fmt_value(result.pop(0)), fmt_value(result.pop(0))
             row = [col_name, data_type, fmt_count(nulls), fmt_pct(nulls, total), distinct, min_v, max_v]
             csv_rows.append(row)

@@ -21,10 +21,8 @@ To see the full rows behind a duplicated key, use run_query.py.
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_pct, fmt_cell, json_columns, truncate
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_pct, fmt_cell, json_columns, truncate, UNGROUPABLE_TYPES
 
-# Types Snowflake can't GROUP BY.
-UNGROUPABLE_TYPES = {"MAP", "GEOGRAPHY", "GEOMETRY", "VECTOR"}
 
 
 def main():

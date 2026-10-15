@@ -215,8 +215,13 @@ def fmt_value(v):
     return str(v).replace("\n", " ").replace("\r", " ")
 
 
-# Semi-structured values arrive as pretty-printed JSON; shown compacted to one line.
+# Semi-structured values arrive as pretty-printed JSON; shown compacted to one
+# line. Snowflake also can't take a meaningful MIN/MAX of these.
 JSON_TYPES = {"VARIANT", "OBJECT", "ARRAY"}
+# Types Snowflake can't compare, so it can't GROUP BY or COUNT(DISTINCT) them.
+UNGROUPABLE_TYPES = {"MAP", "GEOGRAPHY", "GEOMETRY", "VECTOR"}
+# Column types that hold a date or a point in time.
+DATE_TYPES = {"DATE", "TIMESTAMP_NTZ", "TIMESTAMP_LTZ", "TIMESTAMP_TZ"}
 
 
 def json_columns(description):

@@ -21,9 +21,8 @@ values carry no time zone; they're assumed to be stored in UTC - use
 import argparse
 import statistics
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, DATE_TYPES
 
-DATE_TYPES = {"DATE", "TIMESTAMP_NTZ", "TIMESTAMP_LTZ", "TIMESTAMP_TZ"}
 DEFAULT_LAST = {"hour": 48, "day": 30, "week": 12, "month": 12}
 MAX_PERIODS = 1000
 # A complete period with fewer rows than this share of the median is flagged as low.

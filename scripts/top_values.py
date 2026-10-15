@@ -16,10 +16,8 @@ shell, e.g.  python top_values.py MYSCHEMA.MYTABLE "Billing Status"
 
 import argparse
 
-from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES
+from sf_conn import get_connection, current_database, resolve_object, resolve_column, split_table_arg, positive_int, quoted, quote_ident, print_table, write_csv, run_cli, fmt_count, fmt_value, fmt_pct, truncate, JSON_TYPES, UNGROUPABLE_TYPES
 
-# Types Snowflake can't GROUP BY.
-UNGROUPABLE_TYPES = {"MAP", "GEOGRAPHY", "GEOMETRY", "VECTOR"}
 
 
 def main():
