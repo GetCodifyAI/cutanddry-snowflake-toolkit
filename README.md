@@ -135,6 +135,12 @@ what really keeps it read-only.
 - `compare_counts.py` options — `--diff-only` (only tables/views whose
   counts differ) and `--skip-views` (don't run `COUNT(*)` on views, which
   can be slow; tables always use the exact stored row count).
+- `--key` / `-k <COL> [COL ...]` — `diff_rows.py`, required. The column(s)
+  rows are matched on; give several for a composite key, or `A_COL:B_COL`
+  when the key is named differently in the second table (e.g.
+  `--key NODE_ID:ID`). The key must be unique on both sides (check with
+  `find_duplicates.py`); rows with a NULL key can't be matched and show as
+  only in A / only in B.
 - `show_grants.py` options — `--users` (expand roles to the users who
   hold them, following role inheritance) and `--privilege <name>` (only
   one privilege, e.g. `SELECT`).
