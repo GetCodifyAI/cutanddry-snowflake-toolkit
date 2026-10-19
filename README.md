@@ -66,6 +66,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `find_duplicates.py` | Checks whether a column (or combination of columns) is unique: how many keys repeat, extra rows they add, and the most-repeated keys | `python find_duplicates.py PUBLIC.ORDERS ORDER_ID` or `python find_duplicates.py PUBLIC.ORDERS ORDER_ID LINE_NO` |
 | `query_history.py` | Recent queries (last 7 days max): start time, user, warehouse, status, seconds, rows, query text. Defaults to your own queries, past 24 hours | `python query_history.py --failed` or `python query_history.py --slowest --hours 72` |
 | `warehouse_usage.py` | Credits per warehouse for the last N days vs the N before (change, share, cloud services), or per day/week/month with `--by`; `--price` adds dollars. Needs access to `SNOWFLAKE.ACCOUNT_USAGE` | `python warehouse_usage.py` or `python warehouse_usage.py --by month --days 365 --price 3` |
+| `table_access.py` | Who reads and writes a table/view: per user, reads/writes with last time and roles; without a table, every table/view with the same counts, and `--unused` for ones nobody read. Counts queries whose SQL names the table, from `SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY` | `python table_access.py JIRA.ISSUES` or `python table_access.py --schema JIRA --unused --days 90` |
 | `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
 | `list_tasks.py` | Lists tasks with state, schedule, warehouse, last run/result, failures over the past 7 days and next run; `--runs` shows one task's runs with errors | `python list_tasks.py --failing` or `python list_tasks.py --runs DTAM.MY_TASK` |
 | `compare_counts.py` | Compares row counts of same-named tables/views in two schemas (either can be `DATABASE.SCHEMA`), with difference and % | `python compare_counts.py CUT_AND_DRY_PROD_SCHEMA CUT_AND_DRY_UNIFIED.PRODUCTION --diff-only` |
@@ -99,7 +100,7 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script except `test_connection.py` supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `table_access.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
@@ -161,6 +162,14 @@ what really keeps it read-only.
   N days before, max 182, or up to 365 with `--by`), `--by day|week|month`
   (trend instead of per-warehouse comparison), `--warehouse <name>` and
   `--price <dollars per credit>` (adds cost columns).
+- `table_access.py` options — `--days <N>` (history to look at, default 30,
+  max 365), and without a table `--schema <name>` (one schema) and
+  `--unused` (only tables/views no query read). A query counts when its SQL
+  names the table (text in quotes doesn't count); it's a write when the
+  table is the target of an INSERT/MERGE/UPDATE/DELETE/COPY/TRUNCATE/CREATE
+  TABLE AS, otherwise a read. Reads through a view count against the view,
+  so check `find_usages.py --dependencies` before dropping a table. Needs
+  access to `SNOWFLAKE.ACCOUNT_USAGE` and can lag up to 45 minutes.
 - `find_usages.py` options — `--partial` (match the name inside longer
   names, e.g. `ORDERS` also finds `ORDERS_DAILY`; the default is a
   whole-word match), `--database <name>` (search another database instead

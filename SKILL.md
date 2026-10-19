@@ -148,6 +148,22 @@ the versions from this skill's `scripts/` folder into that project folder:
   change, change %, share of total, cloud-services credits and a TOTAL row.
   `--by day|week|month` shows the trend (UTC periods) with a bar instead;
   `--warehouse` limits to one; `--price 3.00` adds dollar cost
+- `table_access.py` — who reads and writes a table/view, from
+  `SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY` (ACCESS_HISTORY is empty on this
+  account; needs access to the SNOWFLAKE database; a year of history; lags
+  up to 45 minutes). With `SCHEMA.TABLE` (or `DATABASE.SCHEMA.TABLE`): per
+  user, READS/LAST_READ/WRITES/LAST_WRITE and ROLES over `--days` (30, max
+  365). Without a table: every table/view in the database (or `--schema`)
+  with row count, size, last_altered and the same counts, fewest reads
+  first; `--unused` keeps only unread ones and says how many are still
+  being written to. Counts successful queries whose SQL names the table
+  (`DB.SCHEMA.TABLE` anywhere, `SCHEMA.TABLE` from inside its database, the
+  bare name after FROM/JOIN/INTO/UPDATE/TABLE/USING from inside its schema);
+  text in quotes (GET_DDL, INFORMATION_SCHEMA lookups) is ignored. Write =
+  the table is the INSERT/MERGE/UPDATE/DELETE/COPY/TRUNCATE/CTAS target,
+  otherwise read; DESCRIBE/SHOW/DDL ignored. Reads through a view count
+  against the view, so pair with `find_usages.py --dependencies` before
+  dropping. ~10s for one table, ~20s for the whole database at 30 days
 - `get_ddl.py` — prints the full `CREATE TABLE`/`CREATE VIEW` statement (DDL)
   for a table or view
 - `search_tables.py` — searches the whole database for tables/views whose
@@ -237,6 +253,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - "Why did the Snowflake bill go up?", "which warehouse costs the most?",
      "credits per day/month" → `warehouse_usage.py`
+   - "Is anyone still using this table?", "who queries X?", "which tables
+     can we clean up / nobody reads?" → `table_access.py` (with a table for
+     who, without one plus `--unused` for cleanup candidates)
    - "What uses this table/column?", "what breaks if I drop/rename/retype
      this?", "which views read from X?" → `find_usages.py`
    - Trying to find which table(s) have a given column (e.g. "which tables
@@ -308,6 +327,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Row-level diff: `python diff_rows.py SCHEMA.TABLE_A OTHER_DB.SCHEMA.TABLE_B --key ID`
      (several key columns for a composite key; `--key NODE_ID:ID` if the
      key's name differs in B; check uniqueness first with `find_duplicates.py`)
+   - Who uses a table: `python table_access.py SCHEMA.TABLE_NAME` (add
+     `--days 90`); unread tables: `python table_access.py --unused` or
+     `python table_access.py --schema SOME_SCHEMA --unused --days 180`
    - What references a name: `python find_usages.py NAME` (e.g.
      `python find_usages.py CANONICALPRODUCT_ID`; add `--partial` to match
      inside longer names, `--schema`/`--database` to change where it looks).
