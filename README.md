@@ -98,101 +98,124 @@ what really keeps it read-only.
 
 ### Flags
 
-- `--output` / `-o <path>` — every script except `test_connection.py` supports this. Writes the full
-  result to a file in addition to printing it: CSV for tabular results
-  (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `storage_usage.py`, `table_access.py`, `list_dynamic_tables.py`,
-  `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
-  file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
-- `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
-  to 10), `recent_tables.py` (max rows to show, defaults to 20),
-  `top_values.py` (how many top values to show, defaults to 20),
-  `find_duplicates.py` (how many duplicated keys to show, defaults to 20),
-  `diff_rows.py` (how many differing rows to list, defaults to 20 - `--output`
-  gets every one), and
-  `query_history.py` (max queries to show, defaults to 20), and
-  `run_query.py` (max rows to print, defaults to 50 - `--output` still
-  gets every row), `list_dynamic_tables.py --refreshes` (max refreshes to
-  show, defaults to 20), `storage_usage.py` (max tables to show, defaults to
-  20 - `--output` gets every one), and `list_tasks.py --runs` (max runs to show, defaults
-  to 20). Example:
-  `python query_table.py PUBLIC.ORDERS --limit 25`.
-- `--sample <N>` — `profile_table.py`, `top_values.py` and `find_duplicates.py`. Works on a
-  random sample of N rows instead of the whole table; useful on very large
-  tables.
-- `--exact` — `profile_table.py`. Exact distinct counts instead of the
-  default approximate ones (typically within ~1%). Much slower on wide
-  tables.
-- `query_history.py` filters — `--hours <H>` (lookback, default 24, max
-  167), `--failed`, `--min-seconds <S>`, `--search <text>`, `--warehouse
-  <name>`, `--slowest` (sort by duration), and `--user <name>` or
-  `--all-users` to see other people's queries. `--all-users` on its own is
-  slow (roughly 30 seconds per day of history); combine it with
-  `--warehouse` or a small `--hours` to keep it fast.
-- `--file` / `-f <path>` — `run_query.py`. Read the query from a `.sql`
+#### Common flags
+
+- `--output` / `-o <path>` — every script except `test_connection.py`.
+  Writes the full result to a file as well as printing it: a `.sql` text
+  file for `get_ddl.py`, a CSV for everything else. Where the terminal
+  shows only part of the result (`--limit`, long values cut short), the
+  file gets all of it. Example:
+  `python search_columns.py email --output matches.csv`.
+- `--limit` / `-n <N>` — how many rows to show:
+
+  | Script | Limits | Default |
+  |---|---|---|
+  | `query_table.py` | rows sampled | 10 |
+  | `run_query.py` | rows printed (`--output` still gets every row) | 50 |
+  | `recent_tables.py` | tables/views shown | 20 |
+  | `top_values.py` | top values shown | 20 |
+  | `find_duplicates.py` | duplicated keys shown | 20 |
+  | `diff_rows.py` | differing rows listed (`--output` gets every one) | 20 |
+  | `query_history.py` | queries shown | 20 |
+  | `list_tasks.py --runs` | runs shown | 20 |
+  | `list_dynamic_tables.py --refreshes` | refreshes shown | 20 |
+  | `storage_usage.py` | tables shown (`--output` gets every one) | 20 |
+
+  Example: `python query_table.py PUBLIC.ORDERS --limit 25`.
+- `--schema <name>` — scopes the listing or search to one schema
+  (case-insensitive): `list_tables.py`, `recent_tables.py`,
+  `search_tables.py`, `search_columns.py`, `find_usages.py`,
+  `list_tasks.py`, `list_dynamic_tables.py`, `table_access.py` (without a
+  table) and `storage_usage.py` (per-table view).
+- `--database <name>` — `find_usages.py` and `storage_usage.py`. Looks in
+  another database instead of `SNOWFLAKE_DATABASE`.
+- `--sample <N>` — `profile_table.py`, `top_values.py` and
+  `find_duplicates.py`. Works on a random sample of N rows instead of the
+  whole table; useful on very large tables.
+- `--ntz-timezone <TZ>` — `freshness.py` and `daily_counts.py`.
+  TIMESTAMP_NTZ values have no time zone and are treated as UTC by
+  default; pass e.g. `America/Los_Angeles` if yours are stored in local time.
+
+#### Script options
+
+**Look at data**
+
+- `run_query.py` — `--file` / `-f <path>` reads the query from a `.sql`
   file instead of the command line.
-- `list_tasks.py` options — `--failing` (only tasks with recent failures
-  or suspended due to errors), `--runs SCHEMA.TASK` (one task's runs with
-  error messages), `--hours <H>` (run-history window, default and max 167
-  i.e. 7 days).
-- `list_dynamic_tables.py` options — `--failing` (only dynamic tables with
-  a failed refresh in the past 7 days, with the latest error) and
-  `--refreshes SCHEMA.TABLE` (one dynamic table's recent refreshes: when
-  each ran, success, full or incremental, queue vs run time, rows
-  inserted/deleted and any error). Refresh history only goes back about 7
-  days. `--refreshes` can't be combined with `--failing` or `--schema`.
-- `compare_counts.py` options — `--diff-only` (only tables/views whose
-  counts differ) and `--skip-views` (don't run `COUNT(*)` on views, which
-  can be slow; tables always use the exact stored row count).
-- `--key` / `-k <COL> [COL ...]` — `diff_rows.py`, required. The column(s)
+- `profile_table.py` — `--exact` gives exact distinct counts instead of
+  the default approximate ones (typically within ~1%). Much slower on wide
+  tables.
+- `daily_counts.py` — `--by hour|day|week|month` (default `day`),
+  `--last <N>` (how many periods back, including the current one; defaults
+  to 48 hours / 30 days / 12 weeks / 12 months, max 1,000) and
+  `--timezone <TZ>` (the zone periods are counted in, default UTC).
+
+**Compare**
+
+- `compare_counts.py` — `--diff-only` (only tables/views whose counts
+  differ) and `--skip-views` (don't run `COUNT(*)` on views, which can be
+  slow; tables always use the exact stored row count).
+- `diff_rows.py` — `--key` / `-k <COL> [COL ...]`, required. The column(s)
   rows are matched on; give several for a composite key, or `A_COL:B_COL`
   when the key is named differently in the second table (e.g.
   `--key NODE_ID:ID`). The key must be unique on both sides (check with
   `find_duplicates.py`); rows with a NULL key can't be matched and show as
   only in A / only in B.
-- `show_grants.py` options — `--users` (expand roles to the users who
-  hold them, following role inheritance) and `--privilege <name>` (only
-  one privilege, e.g. `SELECT`).
-- `--ntz-timezone <TZ>` — `freshness.py` and `daily_counts.py`.
-  TIMESTAMP_NTZ values have no time zone and are treated as UTC by
-  default; pass e.g. `America/Los_Angeles` if yours are stored in local time.
-- `daily_counts.py` options — `--by hour|day|week|month` (default `day`),
-  `--last <N>` (how many periods back, including the current one; defaults
-  to 48 hours / 30 days / 12 weeks / 12 months, max 1,000) and
-  `--timezone <TZ>` (the zone periods are counted in, default UTC).
-- `warehouse_usage.py` options — `--days <N>` (default 30; compared with the
-  N days before, max 182, or up to 365 with `--by`), `--by day|week|month`
+
+**Usage, access & lineage**
+
+- `find_usages.py` — `--partial` (match the name inside longer names, e.g.
+  `ORDERS` also finds `ORDERS_DAILY`; the default is a whole-word match)
+  and `--dependencies` (for one `SCHEMA.TABLE_OR_VIEW`, list objects in
+  any database that depend on it, directly or through other views/dynamic
+  tables, from `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES`; can lag up
+  to 3 hours, needs access to the `SNOWFLAKE` database, and can't be
+  combined with `--partial` or `--schema`).
+- `table_access.py` — `--days <N>` (history to look at, default 30, max
+  365) and, without a table, `--unused` (only tables/views no query read).
+  A query counts when its SQL names the table (text in quotes doesn't
+  count); it's a write when the table is the target of an
+  INSERT/MERGE/UPDATE/DELETE/COPY/TRUNCATE/CREATE TABLE AS, otherwise a
+  read. Reads through a view count against the view, so check
+  `find_usages.py --dependencies` before dropping a table. Needs access to
+  `SNOWFLAKE.ACCOUNT_USAGE` and can lag up to 45 minutes.
+- `show_grants.py` — `--users` (expand roles to the users who hold them,
+  following role inheritance) and `--privilege <name>` (only one
+  privilege, e.g. `SELECT`).
+
+**Pipelines**
+
+- `list_tasks.py` — `--failing` (only tasks with recent failures or
+  suspended due to errors), `--runs SCHEMA.TASK` (one task's runs with
+  error messages) and `--hours <H>` (run-history window, default and max
+  167, i.e. 7 days).
+- `list_dynamic_tables.py` — `--failing` (only dynamic tables with a
+  failed refresh in the past 7 days, with the latest error) and
+  `--refreshes SCHEMA.TABLE` (one dynamic table's recent refreshes: when
+  each ran, success, full or incremental, queue vs run time, rows
+  inserted/deleted and any error). Refresh history only goes back about 7
+  days. `--refreshes` can't be combined with `--failing` or `--schema`.
+
+**Cost & activity**
+
+- `query_history.py` — `--hours <H>` (lookback, default 24, max 167),
+  `--failed`, `--min-seconds <S>`, `--search <text>`, `--warehouse
+  <name>`, `--slowest` (sort by duration), and `--user <name>` or
+  `--all-users` to see other people's queries. `--all-users` on its own is
+  slow (roughly 30 seconds per day of history); combine it with
+  `--warehouse` or a small `--hours` to keep it fast.
+- `warehouse_usage.py` — `--days <N>` (default 30; compared with the N
+  days before, max 182, or up to 365 with `--by`), `--by day|week|month`
   (trend instead of per-warehouse comparison), `--warehouse <name>` and
   `--price <dollars per credit>` (adds cost columns).
-- `storage_usage.py` options — `--by database|schema` (totals per database
-  across the whole account, or per schema, instead of per table),
-  `--database <name>` (another database instead of `SNOWFLAKE_DATABASE`),
-  `--schema <name>` and `--dropped` (only dropped tables still being
-  billed) for the per-table view, and `--price <dollars per TB per month>`
-  (adds monthly cost). NOT_LIVE_% is the share held for time travel,
-  fail-safe and clones: lower the retention for high time travel, and make
-  tables reloaded in full `TRANSIENT` to drop fail-safe. GB/TB are
-  1,024-based; from `TABLE_STORAGE_METRICS`, which can lag up to 90 minutes.
-- `table_access.py` options — `--days <N>` (history to look at, default 30,
-  max 365), and without a table `--schema <name>` (one schema) and
-  `--unused` (only tables/views no query read). A query counts when its SQL
-  names the table (text in quotes doesn't count); it's a write when the
-  table is the target of an INSERT/MERGE/UPDATE/DELETE/COPY/TRUNCATE/CREATE
-  TABLE AS, otherwise a read. Reads through a view count against the view,
-  so check `find_usages.py --dependencies` before dropping a table. Needs
-  access to `SNOWFLAKE.ACCOUNT_USAGE` and can lag up to 45 minutes.
-- `find_usages.py` options — `--partial` (match the name inside longer
-  names, e.g. `ORDERS` also finds `ORDERS_DAILY`; the default is a
-  whole-word match), `--database <name>` (search another database instead
-  of `SNOWFLAKE_DATABASE`) and `--dependencies` (for one
-  `SCHEMA.TABLE_OR_VIEW`, list objects in any database that depend on it,
-  directly or through other views/dynamic tables, from
-  `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES`; can lag up to 3 hours,
-  needs access to the `SNOWFLAKE` database, and can't be combined with
-  `--partial` or `--schema`).
-- `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`,
-  `recent_tables.py`, `search_tables.py`, `search_columns.py` and `find_usages.py`.
-  Scopes the listing or search to one schema (case-insensitive).
+- `storage_usage.py` — `--by database|schema` (totals per database across
+  the whole account, or per schema, instead of per table), `--dropped`
+  (per-table view: only dropped tables still being billed) and
+  `--price <dollars per TB per month>` (adds monthly cost). NOT_LIVE_% is
+  the share held for time travel, fail-safe and clones: lower the
+  retention for high time travel, and make tables reloaded in full
+  `TRANSIENT` to drop fail-safe. GB/TB are 1,024-based; from
+  `TABLE_STORAGE_METRICS`, which can lag up to 90 minutes.
 
 Terminal output is printed the same way whether or not `--output` is used:
 an aligned, column-width-aware table.
