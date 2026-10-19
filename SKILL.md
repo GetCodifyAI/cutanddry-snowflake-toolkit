@@ -148,6 +148,19 @@ the versions from this skill's `scripts/` folder into that project folder:
   change, change %, share of total, cloud-services credits and a TOTAL row.
   `--by day|week|month` shows the trend (UTC periods) with a bar instead;
   `--warehouse` limits to one; `--price 3.00` adds dollar cost
+- `storage_usage.py` — storage per table from
+  `SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS` (needs SNOWFLAKE database
+  access; lags up to 90 minutes), split into ACTIVE (live), TIME_TRAVEL,
+  FAILSAFE and CLONE GB (1,024-based), with TOTAL and NOT_LIVE_% (share
+  that isn't live data - all of it is billed). Default: biggest tables in
+  the configured database (or `--database`, `--schema`), with TYPE
+  (PERMANENT/TRANSIENT), RETENTION_DAYS (blank for dropped tables and ones
+  the role can't see, e.g. CUT_AND_DRY_UNIFIED.STAGING) and DROPPED date,
+  since dropped tables keep costing until fail-safe ends; `--dropped` shows
+  only those; `--limit` (20). `--by database` totals the whole account,
+  `--by schema` one database. `--price 23` adds monthly cost at $/TB/month.
+  Advice it prints: high time travel → lower DATA_RETENTION_TIME_IN_DAYS;
+  high fail-safe on tables reloaded in full → make them TRANSIENT
 - `table_access.py` — who reads and writes a table/view, from
   `SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY` (ACCESS_HISTORY is empty on this
   account; needs access to the SNOWFLAKE database; a year of history; lags
@@ -253,6 +266,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Need the exact `CREATE TABLE`/`CREATE VIEW` statement → `get_ddl.py`
    - "Why did the Snowflake bill go up?", "which warehouse costs the most?",
      "credits per day/month" → `warehouse_usage.py`
+   - "Why is storage so big/expensive?", "which tables take the most
+     space?", "what's time travel / fail-safe costing us?" →
+     `storage_usage.py` (`--by database` first for the whole account)
    - "Is anyone still using this table?", "who queries X?", "which tables
      can we clean up / nobody reads?" → `table_access.py` (with a table for
      who, without one plus `--unused` for cleanup candidates)
@@ -327,6 +343,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Row-level diff: `python diff_rows.py SCHEMA.TABLE_A OTHER_DB.SCHEMA.TABLE_B --key ID`
      (several key columns for a composite key; `--key NODE_ID:ID` if the
      key's name differs in B; check uniqueness first with `find_duplicates.py`)
+   - Storage: `python storage_usage.py --by database` (whole account), then
+     `python storage_usage.py --database SOME_DB` for its biggest tables;
+     `--by schema`, `--dropped`, `--price <dollars per TB per month>`
    - Who uses a table: `python table_access.py SCHEMA.TABLE_NAME` (add
      `--days 90`); unread tables: `python table_access.py --unused` or
      `python table_access.py --schema SOME_SCHEMA --unused --days 180`

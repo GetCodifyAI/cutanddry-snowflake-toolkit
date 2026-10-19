@@ -66,6 +66,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `find_duplicates.py` | Checks whether a column (or combination of columns) is unique: how many keys repeat, extra rows they add, and the most-repeated keys | `python find_duplicates.py PUBLIC.ORDERS ORDER_ID` or `python find_duplicates.py PUBLIC.ORDERS ORDER_ID LINE_NO` |
 | `query_history.py` | Recent queries (last 7 days max): start time, user, warehouse, status, seconds, rows, query text. Defaults to your own queries, past 24 hours | `python query_history.py --failed` or `python query_history.py --slowest --hours 72` |
 | `warehouse_usage.py` | Credits per warehouse for the last N days vs the N before (change, share, cloud services), or per day/week/month with `--by`; `--price` adds dollars. Needs access to `SNOWFLAKE.ACCOUNT_USAGE` | `python warehouse_usage.py` or `python warehouse_usage.py --by month --days 365 --price 3` |
+| `storage_usage.py` | What's taking up storage: each table's live data vs time travel, fail-safe and clone bytes (all billed), biggest first, including dropped tables still billed; `--by database` for the whole account, `--by schema`, `--price` for monthly cost. Needs access to `SNOWFLAKE.ACCOUNT_USAGE` | `python storage_usage.py --by database --price 23` or `python storage_usage.py --database CUT_AND_DRY_UNIFIED` |
 | `table_access.py` | Who reads and writes a table/view: per user, reads/writes with last time and roles; without a table, every table/view with the same counts, and `--unused` for ones nobody read. Counts queries whose SQL names the table, from `SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY` | `python table_access.py JIRA.ISSUES` or `python table_access.py --schema JIRA --unused --days 90` |
 | `run_query.py` | Runs one custom read-only query (SELECT/WITH/SHOW/DESCRIBE/EXPLAIN only), inline or from a file | `python run_query.py "select count(*) from PUBLIC.ORDERS"` or `python run_query.py --file report.sql` |
 | `list_tasks.py` | Lists tasks with state, schedule, warehouse, last run/result, failures over the past 7 days and next run; `--runs` shows one task's runs with errors | `python list_tasks.py --failing` or `python list_tasks.py --runs DTAM.MY_TASK` |
@@ -100,7 +101,7 @@ what really keeps it read-only.
 - `--output` / `-o <path>` — every script except `test_connection.py` supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
-  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `table_access.py`, `list_dynamic_tables.py`,
+  `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `storage_usage.py`, `table_access.py`, `list_dynamic_tables.py`,
   `diff_schema.py`, `list_schemas.py`, `recent_tables.py`), or a `.sql` text
   file for `get_ddl.py`. Example: `python search_columns.py email --output matches.csv`.
 - `--limit` / `-n <N>` — `query_table.py` (row cap for the sample, defaults
@@ -112,7 +113,8 @@ what really keeps it read-only.
   `query_history.py` (max queries to show, defaults to 20), and
   `run_query.py` (max rows to print, defaults to 50 - `--output` still
   gets every row), `list_dynamic_tables.py --refreshes` (max refreshes to
-  show, defaults to 20), and `list_tasks.py --runs` (max runs to show, defaults
+  show, defaults to 20), `storage_usage.py` (max tables to show, defaults to
+  20 - `--output` gets every one), and `list_tasks.py --runs` (max runs to show, defaults
   to 20). Example:
   `python query_table.py PUBLIC.ORDERS --limit 25`.
 - `--sample <N>` — `profile_table.py`, `top_values.py` and `find_duplicates.py`. Works on a
@@ -162,6 +164,15 @@ what really keeps it read-only.
   N days before, max 182, or up to 365 with `--by`), `--by day|week|month`
   (trend instead of per-warehouse comparison), `--warehouse <name>` and
   `--price <dollars per credit>` (adds cost columns).
+- `storage_usage.py` options — `--by database|schema` (totals per database
+  across the whole account, or per schema, instead of per table),
+  `--database <name>` (another database instead of `SNOWFLAKE_DATABASE`),
+  `--schema <name>` and `--dropped` (only dropped tables still being
+  billed) for the per-table view, and `--price <dollars per TB per month>`
+  (adds monthly cost). NOT_LIVE_% is the share held for time travel,
+  fail-safe and clones: lower the retention for high time travel, and make
+  tables reloaded in full `TRANSIENT` to drop fail-safe. GB/TB are
+  1,024-based; from `TABLE_STORAGE_METRICS`, which can lag up to 90 minutes.
 - `table_access.py` options — `--days <N>` (history to look at, default 30,
   max 365), and without a table `--schema <name>` (one schema) and
   `--unused` (only tables/views no query read). A query counts when its SQL
