@@ -49,6 +49,23 @@ python test_connection.py
 This prints your current user/role/warehouse/account/version and lists every
 database you can see. If this works, everything else will too.
 
+### Run from anywhere (optional)
+
+Add this to `~/.zshrc` (or `~/.bashrc`), with `SF_HOME` set to where you
+cloned this repo, then open a new terminal:
+
+```
+SF_HOME=~/path/to/cutanddry-snowflake-toolkit
+sf() { "$SF_HOME"/venv/bin/python "$SF_HOME"/scripts/"$1".py "${@:2}"; }
+```
+
+Now `sf <script name without .py> [arguments]` works from any folder, with
+no `cd scripts` and no `source venv/bin/activate` — e.g.
+`sf table_access JIRA.ISSUES` or `sf storage_usage --by database`. It calls
+the venv's Python directly, and `sf_conn.py` finds `scripts/.env` on its
+own. Relative paths you pass, like `--output out.csv` or
+`run_query.py --file report.sql`, are relative to the folder you're in.
+
 ## Scripts
 
 Run all of these from inside the `scripts/` folder (with the venv activated).
