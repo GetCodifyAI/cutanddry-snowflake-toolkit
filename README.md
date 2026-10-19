@@ -149,6 +149,15 @@ what really keeps it read-only.
   N days before, max 182, or up to 365 with `--by`), `--by day|week|month`
   (trend instead of per-warehouse comparison), `--warehouse <name>` and
   `--price <dollars per credit>` (adds cost columns).
+- `find_usages.py` options — `--partial` (match the name inside longer
+  names, e.g. `ORDERS` also finds `ORDERS_DAILY`; the default is a
+  whole-word match), `--database <name>` (search another database instead
+  of `SNOWFLAKE_DATABASE`) and `--dependencies` (for one
+  `SCHEMA.TABLE_OR_VIEW`, list objects in any database that depend on it,
+  directly or through other views/dynamic tables, from
+  `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES`; can lag up to 3 hours,
+  needs access to the `SNOWFLAKE` database, and can't be combined with
+  `--partial` or `--schema`).
 - `--schema <name>` — `list_tables.py`, `list_dynamic_tables.py`, `list_tasks.py`,
   `recent_tables.py`, `search_tables.py`, `search_columns.py` and `find_usages.py`.
   Scopes the listing or search to one schema (case-insensitive).
