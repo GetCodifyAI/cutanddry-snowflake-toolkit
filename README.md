@@ -132,6 +132,12 @@ what really keeps it read-only.
   or suspended due to errors), `--runs SCHEMA.TASK` (one task's runs with
   error messages), `--hours <H>` (run-history window, default and max 167
   i.e. 7 days).
+- `list_dynamic_tables.py` options — `--failing` (only dynamic tables with
+  a failed refresh in the past 7 days, with the latest error) and
+  `--refreshes SCHEMA.TABLE` (one dynamic table's recent refreshes: when
+  each ran, success, full or incremental, queue vs run time, rows
+  inserted/deleted and any error). Refresh history only goes back about 7
+  days. `--refreshes` can't be combined with `--failing` or `--schema`.
 - `compare_counts.py` options — `--diff-only` (only tables/views whose
   counts differ) and `--skip-views` (don't run `COUNT(*)` on views, which
   can be slow; tables always use the exact stored row count).
