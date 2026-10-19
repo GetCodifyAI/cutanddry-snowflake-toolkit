@@ -96,7 +96,7 @@ what really keeps it read-only.
 
 ### Flags
 
-- `--output` / `-o <path>` — every script supports this. Writes the full
+- `--output` / `-o <path>` — every script except `test_connection.py` supports this. Writes the full
   result to a file in addition to printing it: CSV for tabular results
   (`list_tables.py`, `search_tables.py`, `search_columns.py`,
   `query_table.py`, `describe_table.py`, `profile_table.py`, `top_values.py`, `find_duplicates.py`, `query_history.py`, `run_query.py`, `list_tasks.py`, `compare_counts.py`, `diff_rows.py`, `show_grants.py`, `freshness.py`, `daily_counts.py`, `find_usages.py`, `warehouse_usage.py`, `list_dynamic_tables.py`,
