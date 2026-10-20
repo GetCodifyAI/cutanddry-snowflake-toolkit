@@ -201,6 +201,16 @@ the versions from this skill's `scripts/` folder into that project folder:
   failed refresh in the past 7 days, adding failure count, last failure time
   and last error (Snowflake doesn't record why a dynamic table was
   suspended, so suspended ones without failures aren't included)
+- `pipe_status.py` — lists Snowpipes (pipes auto-loading files from a
+  stage) in `SNOWFLAKE_DATABASE` (`--database` for another, `--all` for
+  every database, `--schema` for one schema): state from
+  `SYSTEM$PIPE_STATUS` (running/paused), files pending, and from
+  `ACCOUNT_USAGE.COPY_HISTORY` (lags up to 2 hours) the last load, files,
+  rows, partially loaded and failed files, and latest error over `--days`
+  (default 7). `--failing` keeps only pipes not running or with bad loads.
+  `--loads SCHEMA.PIPE` (or `DATABASE.SCHEMA.PIPE`) shows one pipe's recent
+  files instead (`--limit` default 20; with `--failing`, only failed/partial
+  files): load time, status, file, rows, error count and first error
 - `diff_schema.py` — compares two schemas: tables/views present in only one
   of them, and for tables/views present in both, a switch between table and
   view (`KIND_CHANGED`) and columns that were added, removed, or changed
@@ -286,6 +296,9 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - "Is this dynamic table refreshing?", "why is it stale/slow?", "why did
      its refresh fail?" → `list_dynamic_tables.py --refreshes SCHEMA.TABLE`;
      "which dynamic tables are failing?" → `list_dynamic_tables.py --failing`
+   - "Are the pipes loading?", "is Snowpipe stuck/paused?", "which pipe
+     loads are failing?" → `pipe_status.py --all --failing`; "why did this
+     file fail to load?" → `pipe_status.py --loads SCHEMA.PIPE --failing`
    - Comparing two schemas (e.g. a versioned pair like `DTAM_V2` vs
      `DTAM_V3`) to see what tables/columns differ → `diff_schema.py`
    - "What changed recently" across the database (or one schema) →
@@ -362,6 +375,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Dynamic tables only: `python list_dynamic_tables.py` or
      `python list_dynamic_tables.py --schema SOME_SCHEMA`; one table's
      refreshes: `python list_dynamic_tables.py --refreshes SCHEMA.TABLE`
+   - Snowpipes: `python pipe_status.py --all` (or `--failing`); one pipe's
+     files: `python pipe_status.py --loads DATABASE.SCHEMA.PIPE`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either
      can be `DATABASE.SCHEMA` to compare across databases)
    - Recently changed tables: `python recent_tables.py` (add `--limit`/`-n`
