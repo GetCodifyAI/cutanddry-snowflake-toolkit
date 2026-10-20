@@ -36,6 +36,10 @@ the versions from this skill's `scripts/` folder into that project folder:
   stored case — every other script uses this so the user never has to worry
   about quoting lowercase/mixed-case identifiers (e.g. Airbyte's
   `airbyte_internal` schema).
+- `test_connection.py` — sanity-checks `.env` and credentials: prints the
+  current user/role/warehouse/account/version and lists every database the
+  user can see. Run it first when setting up or fixing a connection; it's
+  the only script that works without `SNOWFLAKE_DATABASE`
 - `list_tables.py` — lists every table AND view (with kind, row count, size,
   created, last_altered) as an aligned table in whatever database is set in `.env`, optionally filtered to
   one schema
