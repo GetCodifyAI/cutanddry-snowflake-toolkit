@@ -34,7 +34,7 @@ columns.
 import argparse
 import re
 
-from sf_conn import get_connection, current_database, resolve_database, resolve_schema, resolve_object, split_table_arg, quoted, info_schema, show_rows, print_table, write_csv, run_cli, plural
+from sf_conn import get_connection, current_database, resolve_database, resolve_schema, resolve_object, split_table_arg, quoted, info_schema, show_rows, print_table, write_csv, run_cli, plural, fmt_count
 
 # How much SQL to show either side of the first match.
 CONTEXT_CHARS = 30
@@ -183,7 +183,7 @@ def main():
             if not matches:
                 continue
             display_rows.append([f"{schema}.{obj}", kind, f"{len(matches):,}", context(sql, matches[0])])
-            csv_rows.append([schema, obj, kind, len(matches), " | ".join(context(sql, m) for m in matches)])
+            csv_rows.append([schema, obj, kind, fmt_count(len(matches)), " | ".join(context(sql, m) for m in matches)])
 
         where = f"{db}.{real_schema}" if real_schema else db
         how = "anywhere" if args.partial else "as a whole word"

@@ -79,7 +79,7 @@ def list_all(args, conn, db):
             n_failed, last_failed, last_error = failures[(schema_name, name)]
             error_line = " ".join((last_error or "").split())
             display_rows[-1] += [f"{n_failed:,}", fmt_value(last_failed), truncate(error_line)]
-            csv_rows[-1] += [n_failed, fmt_value(last_failed), last_error or ""]
+            csv_rows[-1] += [fmt_count(n_failed), fmt_value(last_failed), last_error or ""]
 
     headers = ["TABLE", "TARGET_LAG", "WAREHOUSE", "REFRESH_MODE", "STATE", "ROWS", "SIZE", "DATA_TIMESTAMP"]
     if args.failing:
