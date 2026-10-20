@@ -314,7 +314,7 @@ def truncate(s):
 
 def fmt_pct(part, whole):
     """Percentage with one decimal place, or 'n/a' for an empty table."""
-    return f"{100 * part / whole:.1f}%" if whole else "n/a"
+    return f"{100 * part / whole:,.1f}%" if whole else "n/a"
 
 
 def print_table(headers, rows):

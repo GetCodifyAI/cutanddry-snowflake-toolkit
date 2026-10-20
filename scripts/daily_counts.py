@@ -126,7 +126,7 @@ def main():
             elif n == 0:
                 note = "NO ROWS"
             elif median and n < LOW_SHARE * median:
-                note = f"low ({100 * n / median:.1f}% of median)"
+                note = f"low ({100 * n / median:,.1f}% of median)"
             else:
                 note = ""
             bar = "#" * round(BAR_WIDTH * n / peak)
