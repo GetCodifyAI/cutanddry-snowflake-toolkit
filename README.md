@@ -97,6 +97,7 @@ Run all of these from inside the `scripts/` folder (with the venv activated).
 | `list_dynamic_tables.py` | Lists dynamic tables with target lag, warehouse, refresh mode, scheduling state, row count/size; `--failing` keeps only ones with failed refreshes in the past 7 days; `--refreshes` shows one table's recent refreshes (queue vs run time, rows inserted/deleted, errors) | `python list_dynamic_tables.py --failing` or `python list_dynamic_tables.py --refreshes SUPPLIER_DASHBOARD.ACTIVE_CUSTOMERS_VIEW` |
 | `pipe_status.py` | Lists Snowpipes with state (running/paused), files waiting, and files loaded / partially loaded / failed over the past 7 days with the latest error; `--all` covers every database, `--failing` keeps only pipes not running or with bad loads; `--loads` shows one pipe's recent files with errors | `python pipe_status.py --all --failing` or `python pipe_status.py --loads BIRITE.BIRITE_INVOICE_PIPE` |
 | `stream_status.py` | Lists streams with their source table, mode, state (ok / stale soon / stale / invalid), when they go stale and whether they have changes waiting; `--all` covers every database, `--failing` keeps only streams that are stale, invalid or go stale within `--days` (default 7) | `python stream_status.py --all --failing` |
+| `dropped_objects.py` | Lists tables, views, schemas and databases dropped in the past 7 days and whether `UNDROP` can still restore them (restorable / fail-safe / gone), until when, and how many times the name was dropped; prints the `UNDROP` commands. `--restorable` keeps only the ones that can come back | `python dropped_objects.py --all --restorable` or `python dropped_objects.py --search orders --days 30` |
 | `diff_schema.py` | Compares two schemas: tables/views only in one, ones that switched between table and view, and columns added/removed/changed (full type incl. length/precision, and nullability) on tables present in both; either schema can be `DATABASE.SCHEMA` | `python diff_schema.py DTAM_V2 DTAM_V3` or `python diff_schema.py CUT_AND_DRY_PROD_SCHEMA CUT_AND_DRY_UNIFIED.PRODUCTION` |
 | `list_schemas.py` | Lists every schema in the database with table/view counts, estimated size, created/last_altered | `python list_schemas.py` |
 | `recent_tables.py` | Lists tables/views sorted by last_altered, most recent first - "what changed recently" | `python recent_tables.py --limit 50` or `python recent_tables.py --schema PUBLIC` |
@@ -139,6 +140,7 @@ what really keeps it read-only.
   | `list_tasks.py --runs` | runs shown | 20 |
   | `list_dynamic_tables.py --refreshes` | refreshes shown | 20 |
   | `pipe_status.py --loads` | files shown | 20 |
+  | `dropped_objects.py` | objects shown (`--output` gets every one) | 50 |
   | `storage_usage.py` | tables shown (`--output` gets every one) | 20 |
 
   Example: `python query_table.py PUBLIC.ORDERS --limit 25`.
@@ -146,10 +148,10 @@ what really keeps it read-only.
   (case-insensitive): `list_tables.py`, `recent_tables.py`,
   `search_tables.py`, `search_columns.py`, `find_usages.py`,
   `list_tasks.py`, `list_dynamic_tables.py`, `pipe_status.py`,
-  `stream_status.py`, `table_access.py` (without a table) and `storage_usage.py` (per-table
+  `stream_status.py`, `dropped_objects.py`, `table_access.py` (without a table) and `storage_usage.py` (per-table
   view).
 - `--database <name>` — `find_usages.py`, `storage_usage.py`,
-  `pipe_status.py` and `stream_status.py`. Looks in
+  `pipe_status.py`, `stream_status.py` and `dropped_objects.py`. Looks in
   another database instead of `SNOWFLAKE_DATABASE`.
 - `--sample <N>` — `profile_table.py`, `top_values.py` and
   `find_duplicates.py`. Works on a random sample of N rows instead of the
@@ -229,6 +231,17 @@ what really keeps it read-only.
   within `--days`) and `--days <N>` (how far ahead to warn, default 7).
   A stale stream has lost the changes it was tracking and must be
   recreated; `HAS_DATA` is blank for stale and invalid streams.
+- `dropped_objects.py` — `--all` (every database your role can see),
+  `--restorable` (only objects `UNDROP` can still bring back),
+  `--search <text>` (names containing the text), `--days <N>` (how far
+  back to look, default 7, max 365). `--database` and `--schema` accept
+  dropped ones. Restorable means still inside Time Travel retention (1 day
+  by default on this account); after that, permanent tables spend 7 days
+  in Fail-safe, where only Snowflake Support can recover them, and
+  transient tables are gone. Views can't be undropped and Snowflake
+  doesn't keep their SQL. A name dropped many times is one row; `UNDROP`
+  restores the most recent, and fails while a live object has the name.
+  From `ACCOUNT_USAGE`, which can lag up to 2 hours.
 
 **Cost & activity**
 
