@@ -219,6 +219,17 @@ the versions from this skill's `scripts/` folder into that project folder:
   if nothing consumes it before STALE_AFTER, losing its changes silently.
   `--failing` keeps only stale, invalid, or going stale within `--days`
   (default 7). Find what consumes a stream with `find_usages.py STREAM_NAME`
+- `dropped_objects.py` — lists tables, dynamic tables, views, schemas and
+  databases dropped in `SNOWFLAKE_DATABASE` (`--database`/`--schema`, which
+  may be dropped ones, or `--all`) over `--days` (7, max 365), one row per
+  name with TIMES dropped, STATUS (restorable / fail-safe / gone / can't
+  undrop for views), UNTIL (end of Time Travel, or of Fail-safe), rows and
+  a note: hours left, "name in use - rename the current one first", parent
+  schema/database dropped too, or "recreated since" for views. Prints the
+  `UNDROP` statements for restorable ones (it never runs them - hand them to
+  the user). `--restorable` keeps only those; `--search TEXT` filters names;
+  `--limit` (50). From `ACCOUNT_USAGE` (TABLES/SCHEMATA/DATABASES), lags up
+  to 2 hours; Time Travel retention is 1 day on this account, so act fast
 - `diff_schema.py` — compares two schemas: tables/views present in only one
   of them, and for tables/views present in both, a switch between table and
   view (`KIND_CHANGED`) and columns that were added, removed, or changed
@@ -309,6 +320,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
      file fail to load?" → `pipe_status.py --loads SCHEMA.PIPE --failing`
    - "Are any streams stale?", "is this stream about to go stale?",
      "does it have changes waiting?" → `stream_status.py --all --failing`
+   - "Someone dropped a table", "can we get it back?", "what was deleted
+     recently?" → `dropped_objects.py --all --restorable` (or `--search NAME`)
    - Comparing two schemas (e.g. a versioned pair like `DTAM_V2` vs
      `DTAM_V3`) to see what tables/columns differ → `diff_schema.py`
    - "What changed recently" across the database (or one schema) →
@@ -388,6 +401,8 @@ On macOS with a Homebrew-managed Python, plain `pip install` will fail with
    - Snowpipes: `python pipe_status.py --all` (or `--failing`); one pipe's
      files: `python pipe_status.py --loads DATABASE.SCHEMA.PIPE`
    - Streams: `python stream_status.py --all` (or `--failing`)
+   - Dropped objects: `python dropped_objects.py --all --restorable`, or
+     `python dropped_objects.py --search ORDERS --days 30`
    - Compare two schemas: `python diff_schema.py SCHEMA_A SCHEMA_B` (either
      can be `DATABASE.SCHEMA` to compare across databases)
    - Recently changed tables: `python recent_tables.py` (add `--limit`/`-n`
